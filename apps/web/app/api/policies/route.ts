@@ -3,6 +3,9 @@ import postgres from 'postgres';
 import { CreatePolicySchema, PolicySchema } from '@sdb/shared/schemas';
 import { z } from 'zod';
 
+// Marcar como dinâmica para evitar problemas de build estático
+export const dynamic = 'force-dynamic';
+
 // GET /api/policies - Listar políticas
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
