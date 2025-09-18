@@ -110,6 +110,7 @@
 - **Build Command**: `pnpm build`
 - **Output Directory**: `.next`
 - **Environment Variables**: Firebase + Database configuradas
+- **⚠️ PENDENTE**: Integração GitHub-Vercel para deploy automático
 
 ### 🔧 GitHub Actions
 - **CI Web**: `.github/workflows/ci-web.yml`
@@ -249,7 +250,13 @@ SDB/
 
 ## 🚀 PRÓXIMAS FUNCIONALIDADES (Roadmap)
 
-### 📱 Mobile App
+### � Deploy Automático (URGENTE)
+- [ ] **Configurar integração Vercel-GitHub** para deploy automático
+- [ ] **Workflow GitHub Actions** como alternativa (.github/workflows/deploy-vercel.yml criado)
+- [ ] **Environment Variables** do Vercel configuradas
+- [ ] **Teste de deploy automático** após push para main
+
+### �📱 Mobile App
 - [ ] Release APK assinado para produção
 - [ ] Google Play Store submission
 - [ ] Push notifications avançadas
