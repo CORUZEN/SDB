@@ -317,3 +317,21 @@ SDB/
 **🎯 Status Atual: SISTEMA TOTALMENTE FUNCIONAL E EM PRODUÇÃO**
 
 *Para iniciar um novo chat de desenvolvimento, consulte este CHANGELOG para entender o estado atual do projeto e continuar de onde paramos.*
+
+## [2.0.1] - 2025-09-18 - Correções de Deploy Automático
+
+### 🔧 Ajustes Realizados
+- **Configuração do Vercel**: Ajustado Root Directory para `apps/web`.
+- **Build Command**: Alterado para `pnpm build`.
+- **Output Directory**: Configurado como `.next`.
+- **Environment Variables**: Adicionadas variáveis essenciais para Firebase e banco de dados.
+- **Correção de Erro**: Resolvido problema de "No Next.js version detected".
+
+### 🚀 Testes Realizados
+- Commit e push para testar integração automática.
+- Deploy monitorado no Vercel Dashboard.
+
+### 📊 Resultados Esperados
+- Deploy automático funcionando corretamente.
+- Build concluído sem erros.
+- Site atualizado em produção: https://sdb.coruzen.com.
