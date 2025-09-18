@@ -6,12 +6,21 @@
 - ✅ **Sistema Web totalmente funcional**
 - ✅ **Aplicativo Android compilado (APK)**
 - ✅ **Banco de dados PostgreSQL integrado**
-- ✅ **Deploy em produção configura### 🎉 SUCESSO - Deploy Automático FUNCIONANDO
-- **✅ Problema Resolvido**: Conflito de workflows eliminado
-- **✅ Deploy Ativo**: Vercel processando commit c464883 corretamente  
-- **✅ Integração Nativa**: GitHub-Vercel funcionando perfeitamente
-- **✅ Estrutura Limpa**: `.github/workflows/` apenas com CI essenciais
-- **🎯 Status**: DEPLOY AUTOMÁTICO 100% OPERACIONAL
+- ✅ **Deploy em produção configura### 🚨 PROBLEMA CRÍTICO - Vercel Deploy Travado
+- **Issue**: Vercel processando deploys mas usando commit antigo `5a4599e`
+- **Commit Atual**: `3399d61` (contém todas as correções)
+- **Causa**: Cache/configuração travada entre Production Overrides e Project Settings
+- **Status Deploy**: ✅ "Ready Latest" mas ❌ commit incorreto
+
+### 🔧 SOLUÇÕES TESTADAS
+- ✅ **API Routes Corrigidas**: Adicionado `export const dynamic = 'force-dynamic'`
+- ✅ **Build Local**: Funcionando perfeitamente (Web CI passou)
+- ✅ **GitHub Integration**: Webhook ativo e funcionando
+- ❌ **Vercel Cache**: Travado no commit antigo
+
+### 🎯 PRÓXIMA AÇÃO NECESSÁRIA
+- **Redeploy Manual**: Forçar deploy do commit `3399d61` via Vercel Dashboard
+- **OU Reset Integration**: Desconectar e reconectar repositório GitHub
 - ✅ **Repositório GitHub limpo e organizado**
 
 ---
