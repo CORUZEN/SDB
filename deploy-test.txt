@@ -1,0 +1,5 @@
+# Teste Deploy Vercel
+# Data: $(Get-Date)
+# Status: Testando configuração simples
+
+echo "Deploy test from PowerShell"
