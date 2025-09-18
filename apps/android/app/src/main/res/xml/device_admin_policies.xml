@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<device-admin xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-policies>
+        <!-- Políticas de bloqueio de tela -->
+        <limit-password />
+        <watch-login />
+        <reset-password />
+        <force-lock />
+        
+        <!-- Políticas de wipe -->
+        <wipe-data />
+        
+        <!-- Políticas de criptografia -->
+        <encrypted-storage />
+        
+        <!-- Políticas de câmera -->
+        <disable-camera />
+        
+        <!-- Políticas de keyguard -->
+        <disable-keyguard-features />
+    </uses-policies>
+</device-admin>

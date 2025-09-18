@@ -1,0 +1,18 @@
+{
+  "name": "sdb-monorepo",
+  "private": true,
+  "packageManager": "pnpm@10.16.1",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "echo \"Use: pnpm --filter @sdb/web build\"",
+    "dev:web": "pnpm --filter @sdb/web dev",
+    "lint": "echo \"Adicione eslint/prettier depois\""
+  },
+  "dependencies": {
+    "pg": "^8.16.3",
+    "puppeteer": "^24.22.0"
+  }
+}

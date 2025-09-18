@@ -1,0 +1,38 @@
+name: Web CI
+
+on:
+  push:
+    paths:
+      - 'apps/web/**'
+      - 'packages/**'
+      - '.github/workflows/ci-web.yml'
+      - 'package.json'
+      - 'pnpm-workspace.yaml'
+  pull_request:
+    paths:
+      - 'apps/web/**'
+      - 'packages/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.16.1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install deps (root workspace)
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build web
+        run: pnpm --filter @sdb/web build
