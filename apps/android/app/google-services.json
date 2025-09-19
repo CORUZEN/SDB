@@ -12,7 +12,12 @@
           "package_name": "com.coruzen.sdb"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1040499545637-ssvaaroh45ca2hk51c98rge45ln8c15n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCGudXgfn7DHY9qJk38neakhWHMf7Gja88"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1040499545637-ssvaaroh45ca2hk51c98rge45ln8c15n.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
