@@ -48,7 +48,55 @@
 - **Professional Quality**: Zero warnings = código enterprise-grade
 
 ### 🌟 **Status: PERFEIÇÃO TÉCNICA ALCANÇADA**
-**Este é o marco de qualidade profissional do projeto SDB!** 🚀Deploy Automático 100% FUNCIONAL
+**Este é o marco de qualidade profissional do projeto SDB!** 🚀
+
+## [2.0.3] - 2025-09-18 - MIGRAÇÃO DE DOMÍNIO
+
+### 🌐 **Nova Identidade: FRIAXIS**
+- **Domínio Anterior**: sdb.coruzen.com 
+- **Novo Domínio**: friaxis.coruzen.com
+- **Sistema**: Rebrand completo para FRIAXIS
+
+### 🔧 **Configurações Necessárias**
+- [ ] **Firebase Console**: Adicionar friaxis.coruzen.com aos domínios autorizados
+- [ ] **Google OAuth**: Atualizar authorized domains e redirect URIs
+- [ ] **Vercel**: Configurar custom domain
+- [ ] **Environment Variables**: Manter configurações existentes
+
+### ⚠️ **Problema Identificado**
+- **Erro**: "Unauthorized domain" no login Google
+- **Causa**: Firebase/Google OAuth ainda configurados para sdb.coruzen.com
+- **Status**: 🔄 Aguardando configurações administrativas
+
+## [2.0.4] - 2025-09-18 - MELHORIAS DE LAYOUT MOBILE
+
+### 🎨 **Correções de Layout Implementadas**
+- ✅ **Header Sticky**: Menu superior agora acompanha a rolagem (sticky top-0)
+- ✅ **Footer Positioning**: Rodapé corrigido para ficar sempre no bottom da página
+- ✅ **Z-Index Otimizado**: Header com z-50 para prioridade sobre outros elementos
+- ✅ **Flexbox Layout**: Estrutura de layout melhorada para responsividade
+
+### 🔧 **Detalhes Técnicos**
+- **DashboardHeader.tsx**: Adicionado `sticky top-0` e `z-50`
+- **layout.tsx**: Alterado footer de `flex-shrink-0` para `mt-auto`
+- **Responsive Design**: Layout funciona perfeitamente em mobile/tablet/desktop
+- **Build Status**: ✅ Zero warnings mantido
+
+### 📱 **Problemas Resolvidos**
+- ❌ **Antes**: Footer ficava "fixo" no meio da tela durante scroll
+- ✅ **Depois**: Footer permanece no bottom da página
+- ❌ **Antes**: Header não acompanhava scroll (não-sticky)  
+- ✅ **Depois**: Header sticky funcional em todas as telas
+
+### 🚀 **Testes Realizados**
+- ✅ Servidor local iniciado (http://localhost:3000)
+- ✅ Build production passa sem warnings
+- ✅ Layout responsivo validado
+- ✅ Experiência mobile otimizada
+
+---
+
+### 🎉 SUCESSO TOTAL -
 - **✅ PROBLEMA RESOLVIDO**: Conflito `vercel.json` identificado e removido
 - **✅ Deploy Automático**: GitHub → Vercel funcionando perfeitamente
 - **✅ Commit Atual**: `bf8cfbd` (todas otimizações aplicadas)

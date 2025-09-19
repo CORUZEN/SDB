@@ -74,7 +74,7 @@ export function DashboardHeader() {
   ];
 
   return (
-    <header className="bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 shadow-xl border-b border-blue-800/50 backdrop-blur-sm z-40 relative">
+    <header className="sticky top-0 bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 shadow-xl border-b border-blue-800/50 backdrop-blur-sm z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo e Brand */}
