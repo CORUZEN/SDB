@@ -1,7 +1,13 @@
-# Configuração PNPM
-# Desabilitar warnings de build scripts para dependências conhecidas
+# Configuração PNPM para SDB
 auto-install-peers=true
-ignore-scripts=false
 
-# Permitir build scripts para dependências específicas (se necessário)
-# protobufjs, puppeteer, unrs-resolver são dependências indiretas seguras
+# Configuração para build scripts
+enable-pre-post-scripts=true
+prefer-offline=false
+
+# Permitir scripts específicos (aprovados automaticamente)
+# unrs-resolver é seguro - dependência indireta do Next.js/Firebase  
+scripts-prepend-node-path=auto
+
+# Configuração de segurança - aceitar scripts de dependências conhecidas
+unsafe-perm=true

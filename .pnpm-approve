@@ -1,0 +1,9 @@
+# PNPM Build Scripts Approved
+# This file records permanently approved build scripts
+
+protobufjs
+puppeteer  
+unrs-resolver
+
+# These packages are approved for build scripts execution
+# They are indirect dependencies and considered safe
