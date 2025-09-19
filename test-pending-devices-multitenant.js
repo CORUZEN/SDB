@@ -7,7 +7,7 @@
 const testPendingDevicesMultiTenant = async () => {
   console.log('🧪 Testing Pending Devices Multi-tenant Isolation...\n');
 
-  const baseUrl = 'http://localhost:3000';
+  const baseUrl = 'http://localhost:3001'; // Updated to use port 3001
   const mockToken = 'dev-token-mock';
   
   const tests = [
@@ -128,7 +128,7 @@ const testPendingDevicesMultiTenant = async () => {
     console.log('✅ Admin permissions required');
   } else {
     console.log('\n⚠️ Some tests failed. Check:');
-    console.log('   • Next.js server running on localhost:3000');
+    console.log('   • Next.js server running on localhost:3001');
     console.log('   • Middleware configuration');
     console.log('   • Database connection (some failures expected if DB not configured)');
   }
