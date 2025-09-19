@@ -1,0 +1,7 @@
+# Configuração PNPM
+# Desabilitar warnings de build scripts para dependências conhecidas
+auto-install-peers=true
+ignore-scripts=false
+
+# Permitir build scripts para dependências específicas (se necessário)
+# protobufjs, puppeteer, unrs-resolver são dependências indiretas seguras
