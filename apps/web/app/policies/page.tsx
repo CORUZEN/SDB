@@ -27,7 +27,7 @@ export default function PoliciesPage() {
 
   useEffect(() => {
     loadPolicies();
-  }, [user, searchTerm, filterActive]);
+  }, [user, searchTerm, filterActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadPolicies = async () => {
     setLoading(true);

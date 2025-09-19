@@ -40,7 +40,7 @@ export default function PolicyDetailsPage({ params }: PolicyPageProps) {
 
   useEffect(() => {
     loadPolicyDetails();
-  }, [params.id, user]);
+  }, [params.id, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadPolicyDetails = async () => {
     setLoading(true);

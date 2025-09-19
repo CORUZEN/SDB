@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '../../../components/AuthProvider';
 import ProtectedRoute from '../../../components/ProtectedRoute';
@@ -49,13 +49,7 @@ export default function DevicePage() {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [sendingCommand, setSendingCommand] = useState(false);
 
-  useEffect(() => {
-    if (deviceId) {
-      loadDeviceData();
-    }
-  }, [deviceId]);
-
-  const loadDeviceData = async () => {
+  const loadDeviceData = useCallback(async () => {
     setLoading(true);
     try {
       // Carregar dados do dispositivo
@@ -80,7 +74,13 @@ export default function DevicePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [deviceId, router]);
+
+  useEffect(() => {
+    if (deviceId) {
+      loadDeviceData();
+    }
+  }, [deviceId, loadDeviceData]);
 
   const handleSendCommand = async (commandType: Command['type']) => {
     if (!device || !user) return;

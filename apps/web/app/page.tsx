@@ -90,7 +90,7 @@ export default function Home() {
 
   useEffect(() => {
     loadDevices();
-  }, [user]);
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadDevices = async () => {
     setLoading(true);

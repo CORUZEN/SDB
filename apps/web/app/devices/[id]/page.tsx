@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { MapPin, Smartphone, Battery, Wifi, Clock, ArrowLeft, RotateCcw } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -52,14 +52,7 @@ export default function DeviceDetailPage() {
   const [locating, setLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (deviceId) {
-      fetchDeviceData();
-      fetchLocations();
-    }
-  }, [deviceId]);
-
-  const fetchDeviceData = async () => {
+  const fetchDeviceData = useCallback(async () => {
     try {
       const response = await fetch(`/api/devices?search=${deviceId}`);
       const data = await response.json();
@@ -79,9 +72,9 @@ export default function DeviceDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [deviceId]);
 
-  const fetchLocations = async () => {
+  const fetchLocations = useCallback(async () => {
     try {
       const response = await fetch(`/api/devices/${deviceId}/location?limit=10`);
       const data = await response.json();
@@ -92,7 +85,14 @@ export default function DeviceDetailPage() {
     } catch (err) {
       console.error('Erro ao carregar localizações:', err);
     }
-  };
+  }, [deviceId]);
+
+  useEffect(() => {
+    if (deviceId) {
+      fetchDeviceData();
+      fetchLocations();
+    }
+  }, [deviceId, fetchDeviceData, fetchLocations]);
 
   const handleLocateDevice = async () => {
     setLocating(true);

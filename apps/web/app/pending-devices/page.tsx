@@ -27,7 +27,7 @@ export default function PendingDevicesPage() {
     // Auto-refresh a cada 5 segundos
     const interval = setInterval(fetchPendingDevices, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../../components/AuthProvider';
 import ProtectedRoute from '../../components/ProtectedRoute';
@@ -84,11 +84,7 @@ export default function DashboardPage() {
   const [showMap, setShowMap] = useState(false);
   const [editingDevice, setEditingDevice] = useState<Device | null>(null);
 
-  useEffect(() => {
-    loadDevices();
-  }, [user]);
-
-  const loadDevices = async () => {
+  const loadDevices = useCallback(async () => {
     setLoading(true);
     try {
       // Carregar dispositivos reais do Neon DB via API
@@ -121,7 +117,11 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.email]);
+
+  useEffect(() => {
+    loadDevices();
+  }, [user, loadDevices]);
 
   const handleLocateDevice = async (deviceId: string) => {
     if (!user) {
