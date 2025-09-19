@@ -1,5 +1,7 @@
 import './globals.css';
 import { AuthProvider } from '../components/AuthProvider';
+import ConditionalFooter from '../components/ConditionalFooter';
+import Footer from '../components/Footer';
 
 export const metadata = {
   title: "FRIAXIS - Gestão de Dispositivos - Powered by Coruzen",
@@ -17,10 +19,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="flex-1">
             {children}
           </div>
-          <footer className="mt-auto w-full bg-white/80 backdrop-blur-sm text-center py-3 border-t border-gray-200/50">
-            <div className="text-gray-700 text-sm font-medium">FRIAXIS - Gestão de Dispositivos © 2025.</div>
-            <div className="text-xs text-gray-500 mt-1">Powered by <span className="text-green-600 font-semibold">Coruzen.</span></div>
-          </footer>
+          <ConditionalFooter>
+            <Footer />
+          </ConditionalFooter>
         </AuthProvider>
       </body>
     </html>
