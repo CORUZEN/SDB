@@ -14,23 +14,65 @@ import { auth } from '../lib/firebase-client';
 interface AuthContextType {
   user: any; // User | null;
   loading: boolean;
+  organization: any; // Organization context
+  userRole: string | null;
+  permissions: string[];
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   setUser?: (user: any) => void;
+  refreshUserContext: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  organization: null,
+  userRole: null,
+  permissions: [],
   signInWithEmail: async () => {},
   signInWithGoogle: async () => {},
   signOut: async () => {},
+  refreshUserContext: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [organization, setOrganization] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [permissions, setPermissions] = useState<string[]>([]);
+
+  // Function to refresh user context from API
+  const refreshUserContext = async () => {
+    if (!user) return;
+
+    try {
+      const token = await user.getIdToken();
+      
+      // Fetch user organization and role from API
+      const response = await fetch('/api/organizations/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setOrganization(data.organization);
+        setUserRole(data.role);
+        setPermissions(data.permissions || []);
+        
+        console.log('🏢 Organization context loaded:', data.organization?.name);
+        console.log('👤 User role:', data.role);
+      } else {
+        console.warn('⚠️ Failed to load organization context');
+      }
+    } catch (error) {
+      console.error('❌ Error loading user context:', error);
+    }
+  };
 
   useEffect(() => {
     if (!auth) {
@@ -52,9 +94,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       
-      // Se usuário autenticado, apenas definir no estado
+      // Se usuário autenticado, carregar contexto organizacional
       if (user) {
         console.log(`✅ Usuário autenticado: ${user.email}`);
+        
+        // Load organization context after authentication
+        try {
+          const token = await user.getIdToken();
+          
+          const response = await fetch('/api/organizations/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setOrganization(data.organization);
+            setUserRole(data.role);
+            setPermissions(data.permissions || []);
+            
+            console.log('🏢 Organization context loaded:', data.organization?.name);
+          }
+        } catch (error) {
+          console.warn('⚠️ Failed to load organization context:', error);
+          // Continue even if organization context fails
+        }
+      } else {
+        // Clear organization context on logout
+        setOrganization(null);
+        setUserRole(null);
+        setPermissions([]);
       }
       
       setLoading(false);
@@ -112,10 +183,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     user,
     loading,
+    organization,
+    userRole,
+    permissions,
     signInWithEmail,
     signInWithGoogle,
     signOut,
     setUser,
+    refreshUserContext,
   };
 
   return (

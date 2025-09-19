@@ -205,9 +205,19 @@ export default function PendingDevicesPage() {
     if (showLoading) setLoading(true);
     
     try {
-      const response = await fetch('/api/admin/pending-devices');
+      // Get auth token for organization context
+      const authToken = localStorage.getItem('auth-token') || 'dev-token-mock';
+      
+      const response = await fetch('/api/admin/pending-devices', {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ Pending devices loaded:', data.length);
         setDevices(data);
         setLastUpdated(new Date());
         
@@ -240,9 +250,19 @@ export default function PendingDevicesPage() {
           averageWaitTime,
           urgentCount: urgentDevices.length
         });
+      } else {
+        console.error('❌ Failed to fetch pending devices:', response.status);
+        
+        if (response.status === 503) {
+          const errorData = await response.json();
+          if (errorData.needsSetup) {
+            console.warn('⚠️ Database schema not configured');
+            // Show setup message to user
+          }
+        }
       }
     } catch (error) {
-      console.error('Erro ao buscar dispositivos pendentes:', error);
+      console.error('❌ Error fetching pending devices:', error);
     } finally {
       if (showLoading) setLoading(false);
     }
@@ -296,15 +316,27 @@ export default function PendingDevicesPage() {
     setLoadingActions(prev => new Set(prev).add(id));
     
     try {
+      // Get auth token for organization context
+      const authToken = localStorage.getItem('auth-token') || 'dev-token-mock';
+      
       const response = await fetch(`/api/admin/pending-devices/${id}/approve`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
       });
       
       if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Device approved:', result.device?.name);
         await fetchPendingDevices(false);
+      } else {
+        const error = await response.json();
+        console.error('❌ Failed to approve device:', error.error);
       }
     } catch (error) {
-      console.error('Erro ao aprovar dispositivo:', error);
+      console.error('❌ Error approving device:', error);
     } finally {
       setLoadingActions(prev => {
         const newSet = new Set(prev);
@@ -319,15 +351,27 @@ export default function PendingDevicesPage() {
     setLoadingActions(prev => new Set(prev).add(id));
     
     try {
+      // Get auth token for organization context
+      const authToken = localStorage.getItem('auth-token') || 'dev-token-mock';
+      
       const response = await fetch(`/api/admin/pending-devices/${id}/reject`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
       });
       
       if (response.ok) {
+        const result = await response.json();
+        console.log('❌ Device rejected:', result.device?.name);
         await fetchPendingDevices(false);
+      } else {
+        const error = await response.json();
+        console.error('❌ Failed to reject device:', error.error);
       }
     } catch (error) {
-      console.error('Erro ao rejeitar dispositivo:', error);
+      console.error('❌ Error rejecting device:', error);
     } finally {
       setLoadingActions(prev => {
         const newSet = new Set(prev);

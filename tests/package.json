@@ -1,0 +1,25 @@
+{
+  "name": "friaxis-multi-tenant-tests",
+  "version": "1.0.0",
+  "description": "Testes para validação do sistema multi-tenant FRIAXIS",
+  "scripts": {
+    "test": "jest --config jest.config.js --coverage",
+    "test:watch": "jest --config jest.config.js --watch",
+    "test:multi-tenant": "jest --testNamePattern=\"Organization|Multi-tenant\" --coverage",
+    "test:permissions": "jest --testNamePattern=\"Permission\" --coverage",
+    "test:onboarding": "jest --testNamePattern=\"Onboarding\" --coverage",
+    "test:security": "jest --testNamePattern=\"Security\" --coverage",
+    "test:performance": "jest --testNamePattern=\"Performance\" --coverage"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@types/jest": "^29.5.8",
+    "jest": "^29.7.0",
+    "jest-environment-node": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.3.2"
+  },
+  "dependencies": {
+    "@types/node": "^20.9.0"
+  }
+}
