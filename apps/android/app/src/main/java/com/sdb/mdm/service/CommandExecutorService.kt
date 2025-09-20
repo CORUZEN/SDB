@@ -161,11 +161,24 @@ class CommandExecutorService : Service() {
             "manufacturer" to android.os.Build.MANUFACTURER,
             "android_version" to android.os.Build.VERSION.RELEASE,
             "api_level" to android.os.Build.VERSION.SDK_INT,
-            "serial" to android.os.Build.SERIAL,
+            "serial" to getDeviceSerial(),
             "battery_level" to getBatteryLevel(),
             "storage_free" to getAvailableStorage(),
             "timestamp" to getCurrentTimestamp()
         )
+    }
+    
+    private fun getDeviceSerial(): String {
+        return try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                android.os.Build.getSerial()
+            } else {
+                @Suppress("DEPRECATION")
+                android.os.Build.SERIAL
+            }
+        } catch (e: SecurityException) {
+            "Unknown"
+        }
     }
     
     private suspend fun sendCommandResponse(commandId: String, status: String, response: Map<String, Any>) {

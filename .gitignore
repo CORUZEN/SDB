@@ -5,8 +5,19 @@ dist/
 .next/
 out/
 .vercel/
+
+# Environment Variables (SECURITY - NEVER COMMIT REAL DATA)
 .env
-.env.*
+.env.local
+.env.*.local
+.env.production
+.env.staging
+.env.development
+
+# ✅ ONLY .env.example files should be in git
+# .env.example ✅
+# .env.local.example ✅
+
 .vscode/
 
 # Logs

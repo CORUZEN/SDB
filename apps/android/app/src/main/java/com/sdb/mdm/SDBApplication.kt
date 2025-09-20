@@ -1,73 +1,148 @@
 package com.sdb.mdm
 
 import android.app.Application
-import android.content.Intent
-import android.content.SharedPreferences
-import androidx.preference.PreferenceManager
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.os.Build
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
 import com.sdb.mdm.api.ApiClient
-import com.sdb.mdm.service.PolicyService
+import com.sdb.mdm.utils.PreferencesHelper
+import dagger.hilt.android.HiltAndroidApp
+import javax.inject.Inject
 
-class SDBApplication : Application() {
-    
+/**
+ * FRIAXIS v4.0.0 - Main Application Class
+ * 
+ * Professional MDM Application with:
+ * - Dependency Injection (Hilt)
+ * - Modern Architecture (MVVM + Clean)
+ * - Multi-tenant Support
+ * - Real-time Communication
+ */
+@HiltAndroidApp
+class SDBApplication : Application(), Configuration.Provider {
+
+    @Inject
+    lateinit var workerFactory: HiltWorkerFactory
+
+    // Lazy initialization
+    private val preferencesHelper: PreferencesHelper by lazy { PreferencesHelper(this) }
+    val apiClient: ApiClient by lazy { ApiClient() }
+
     companion object {
+        // Notification Channels
+        const val CHANNEL_GENERAL = "friaxis_general"
+        const val CHANNEL_POLICIES = "friaxis_policies"
+        const val CHANNEL_ALERTS = "friaxis_alerts"
+        const val CHANNEL_SYNC = "friaxis_sync"
+        
+        // App Constants
+        const val APP_VERSION = "4.0.0"
+        const val APP_NAME = "FRIAXIS MDM"
+        
         lateinit var instance: SDBApplication
             private set
     }
-    
-    lateinit var sharedPreferences: SharedPreferences
-    lateinit var apiClient: ApiClient
-    
+
     override fun onCreate() {
         super.onCreate()
         instance = this
         
-        // Inicializar SharedPreferences
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        // Initialize notification channels
+        createNotificationChannels()
         
-        // Inicializar API Client
-        apiClient = ApiClient()
-        
-        // Iniciar serviço de políticas se o device estiver configurado
-        if (isDeviceSetup()) {
-            startService(Intent(this, PolicyService::class.java))
+        // Initialize app components
+        initializeApp()
+    }
+
+    // ==========================================
+    // Public API Methods (used by other components)
+    // ==========================================
+    
+    fun getApiBaseUrl(): String = preferencesHelper.getApiBaseUrl()
+    fun setApiBaseUrl(url: String) = preferencesHelper.setApiBaseUrl(url)
+    
+    fun getStoredDeviceId(): String? = preferencesHelper.getStoredDeviceId()
+    fun setStoredDeviceId(deviceId: String) = preferencesHelper.setStoredDeviceId(deviceId)
+    
+    fun isDeviceSetup(): Boolean = preferencesHelper.isDeviceSetup()
+    fun setDeviceSetup(setup: Boolean) = preferencesHelper.setDeviceSetup(setup)
+    
+    fun getDeviceName(): String? = preferencesHelper.getDeviceName()
+    fun setDeviceName(name: String) = preferencesHelper.setDeviceName(name)
+    
+    fun isEmergencyMode(): Boolean = preferencesHelper.isEmergencyMode()
+    fun setEmergencyMode(enabled: Boolean) = preferencesHelper.setEmergencyMode(enabled)
+    
+    fun resetApp() = preferencesHelper.resetApp()
+    
+    val sharedPreferences get() = preferencesHelper.getSharedPreferences()
+
+    /**
+     * Create notification channels for different types of notifications
+     */
+    private fun createNotificationChannels() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            
+            // General notifications
+            val generalChannel = NotificationChannel(
+                CHANNEL_GENERAL,
+                "General Notifications",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "General app notifications"
+            }
+            
+            // Policy notifications
+            val policyChannel = NotificationChannel(
+                CHANNEL_POLICIES,
+                "Policy Updates",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Security policy and compliance notifications"
+            }
+            
+            // Alert notifications
+            val alertChannel = NotificationChannel(
+                CHANNEL_ALERTS,
+                "Security Alerts",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Critical security alerts and warnings"
+            }
+            
+            // Sync notifications
+            val syncChannel = NotificationChannel(
+                CHANNEL_SYNC,
+                "Synchronization",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Device synchronization status"
+            }
+            
+            notificationManager.createNotificationChannels(listOf(
+                generalChannel, policyChannel, alertChannel, syncChannel
+            ))
         }
     }
-    
-    fun isDeviceSetup(): Boolean {
-        return sharedPreferences.getBoolean("device_approved", false) && 
-               sharedPreferences.getString("device_id", null) != null
+
+    /**
+     * Initialize app components
+     */
+    private fun initializeApp() {
+        // Any additional initialization can be done here
+        // Database migrations, initial setup, etc.
     }
-    
-    fun getStoredDeviceId(): String? {
-        return sharedPreferences.getString("device_id", null)
-    }
-    
-    fun getApiBaseUrl(): String {
-        // Sempre retorna a URL oficial de produção
-        return "https://sdb.coruzen.com/"
-    }
-    
-    fun setEmergencyMode(enabled: Boolean) {
-        sharedPreferences.edit().putBoolean("emergency_mode", enabled).apply()
-    }
-    
-    fun isEmergencyMode(): Boolean {
-        return sharedPreferences.getBoolean("emergency_mode", false)
-    }
-    
-    fun resetApp() {
-        // Limpar todas as configurações
-        sharedPreferences.edit().clear().apply()
-        
-        // Parar todos os serviços
-        stopService(Intent(this, PolicyService::class.java))
-        
-        // Reiniciar a aplicação
-        val intent = packageManager.getLaunchIntentForPackage(packageName)
-        intent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-        startActivity(intent)
-        
-        // Finalizar processo
-        android.os.Process.killProcess(android.os.Process.myPid())
-    }
+
+    /**
+     * Work Manager configuration with Hilt
+     */
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setWorkerFactory(workerFactory)
+            .setMinimumLoggingLevel(if (BuildConfig.DEBUG) android.util.Log.DEBUG else android.util.Log.INFO)
+            .build()
 }

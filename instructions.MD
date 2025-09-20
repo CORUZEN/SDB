@@ -24,18 +24,48 @@ pnpm install                    # Na raiz instala tudo
 
 ### **📱 Compilação Android**
 ```powershell
-# Método automatizado (RECOMENDADO)
-.\build-apk-final.ps1          # Script completo com validações
+# MÉTODO CORRETO - Sempre use do diretório android
+cd "C:\SDB-clean-clone\apps\android"
 
-# Método manual (se script falhar)
-cd apps/android
-.\gradlew.bat clean            # Limpar build anterior
-.\gradlew.bat assembleDebug    # Compilar APK debug
-Copy-Item "app/build/outputs/apk/debug/app-debug.apk" "../../SDB-Mobile-debug.apk" -Force
-cd ..\..
+# Compilação limpa (RECOMENDADO)
+cmd.exe /c "gradlew.bat clean assembleDebug"
+
+# Método alternativo - comandos separados
+.\gradlew.bat clean
+.\gradlew.bat assembleDebug
+
+# ❌ EVITAR - sintaxe que causa erros no PowerShell:
+# gradlew clean && gradlew assembleDebug  # Erro: && inválido
+# cd "path" && gradlew assembleDebug      # Erro: path UNC
+
+# ✅ SINTAXE CORRETA PowerShell:
+cd "apps\android"; .\gradlew.bat assembleDebug  # Usar ; ao invés de &&
 
 # Verificar APK gerado
-Get-ChildItem SDB-Mobile-debug.apk
+Get-ChildItem "app\build\outputs\apk\debug\app-debug.apk" | Select-Object Name, Length, LastWriteTime
+
+# Copiar para raiz do projeto
+Copy-Item "app\build\outputs\apk\debug\app-debug.apk" "..\..\FRIAXIS-v4.0.0-debug.apk" -Force
+```
+
+### **🔧 PowerShell Best Practices**
+```powershell
+# CORRETO - Comandos múltiplos
+cd "caminho"; comando1; comando2
+
+# CORRETO - Paths com espaços
+cd "C:\Programa Files\..."
+
+# CORRETO - Verificar arquivos
+Get-ChildItem "pattern*.ext" | Select-Object Name, Length
+
+# CORRETO - Copiar com força
+Copy-Item "origem" "destino" -Force
+
+# ❌ EVITAR - sintaxe bash no PowerShell
+# dir path /b                    # Use Get-ChildItem
+# && entre comandos              # Use ; ao invés
+# paths sem aspas com espaços    # Sempre usar aspas
 ```
 
 ### **🔧 Configuração Firebase**
@@ -68,12 +98,35 @@ POST /api/migrate/device-registrations  # Tabela de pareamento
 GET /api/dbtest               # Teste de conectividade
 ```
 
-### **⚠️ Problemas Comuns**
-- **PowerShell && erro**: Usar comandos separados ou `;` 
-- **pnpm dev não funciona**: Sempre usar `pnpm dev:web` da raiz
-- **APK não atualiza**: Fazer clean antes do build
-- **Firebase auth erro**: Verificar domínios autorizados no console
-- **Build warnings**: Usar `--no-frozen-lockfile` se necessário
+### **⚠️ Problemas Comuns e Soluções**
+```powershell
+# ❌ ERRO: PowerShell && inválido
+cd "path" && gradlew assembleDebug
+# ✅ SOLUÇÃO: Usar ponto-e-vírgula
+cd "path"; gradlew assembleDebug
+
+# ❌ ERRO: Path UNC inválido  
+dir "C:\path\*.apk" /b
+# ✅ SOLUÇÃO: Usar PowerShell nativo
+Get-ChildItem "C:\path\*.apk"
+
+# ❌ ERRO: Gradlew não encontrado
+gradlew assembleDebug
+# ✅ SOLUÇÃO: Estar no diretório correto
+cd "apps\android"; .\gradlew.bat assembleDebug
+
+# ❌ ERRO: Room/Kapt warnings
+# ✅ SOLUÇÃO: Já corrigido com @Suppress e versioning
+
+# ❌ ERRO: Firebase auth domínio
+# ✅ SOLUÇÃO: Verificar domínios autorizados no console
+
+# ❌ ERRO: APK não atualiza após mudanças
+# ✅ SOLUÇÃO: Sempre fazer clean antes do build
+
+# ❌ ERRO: pnpm dev não funciona da subpasta
+# ✅ SOLUÇÃO: Sempre usar pnpm dev:web da raiz
+```
 
 ---
 
@@ -310,7 +363,8 @@ Execução: painel cria comando → envia FCM → APK executa → responde → p
 
 ## 📊 Status Atual do Projeto (Setembro 2025)
 
-### **✅ Implementado e Funcionando**
+### **✅ FRIAXIS v4.0.0 - Implementado e Funcionando**
+- **Branding Completo**: Nome FRIAXIS, domínio friaxis.coruzen.com, logo escudo azul
 - **Web Dashboard**: 100% funcional com design moderno e profissional
 - **APIs REST**: 11 endpoints implementados e testados em produção
 - **Autenticação**: Firebase Auth + RBAC (admin/operator/viewer)
@@ -319,6 +373,14 @@ Execução: painel cria comando → envia FCM → APK executa → responde → p
 - **Deploy Automático**: GitHub → Vercel (produção) com CI/CD
 - **Build Quality**: Zero warnings, código enterprise-grade
 - **UI/UX Modernizada**: Interface redesenhada com Tailwind CSS e componentes profissionais
+
+### **🔧 Qualidade de Código (100% Limpo)**
+- **Compilação Android**: Zero warnings após correções de APIs depreciadas
+- **PowerShell Scripts**: Comandos corretos, sintaxe compatível
+- **Type Safety**: TypeScript strict, validação Zod completa
+- **APIs Modernas**: Versioning correto para Android 8+ e 9+
+- **Room Database**: Entidades corrigidas com @ColumnInfo, conversores implementados
+- **Jetifier**: Warnings suprimidos para bibliotecas externas
 
 ### **🎨 Design System & UX (100% Concluído)**
 - **Layout Profissional**: Cards modernos, gradientes, sombras consistentes

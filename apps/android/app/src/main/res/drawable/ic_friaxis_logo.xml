@@ -1,0 +1,40 @@
+<!-- FRIAXIS Shield Logo - Professional MDM Application -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+    
+    <!-- Shield background -->
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M60,10 L25,25 L25,65 Q25,85 60,110 Q95,85 95,65 L95,25 Z" />
+    
+    <!-- Inner shield highlight -->
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M60,15 L30,28 L30,63 Q30,80 60,102 Q90,80 90,63 L90,28 Z" />
+    
+    <!-- FRIAXIS text -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M40,40 L40,45 L50,45 L50,50 L42,50 L42,55 L48,55 L48,60 L40,60 L40,75 L36,75 L36,40 Z" />
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M52,40 L52,75 L56,75 L56,60 L58,60 L62,75 L66,75 L62,58 Q64,56 64,52 L64,44 Q64,40 60,40 Z M56,44 L56,56 L60,56 Q60,56 60,50 L60,44 Z" />
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M68,40 L68,75 L72,75 L72,40 Z" />
+    
+    <!-- Security elements -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M60,80 L55,75 L60,70 L65,75 Z" />
+    
+    <!-- Subtle gradient overlay -->
+    <path
+        android:fillColor="#40FFFFFF"
+        android:pathData="M60,15 L30,28 L30,40 Q50,35 60,35 Q70,35 90,40 L90,28 Z" />
+</vector>

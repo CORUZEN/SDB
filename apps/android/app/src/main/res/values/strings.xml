@@ -1,13 +1,104 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">SDB Launcher</string>
-    <string name="device_admin_description">Permite ao SDB aplicar políticas de segurança corporativas</string>
+    <!-- SDB MDM - FRIAXIS v4.0.0 -->
+    <!-- Professional string resources for the MDM application -->
+    
+    <!-- App Information -->
+    <string name="app_name">FRIAXIS</string>
+    <string name="app_version">4.0.0</string>
+    <string name="device_admin_description">Permite ao FRIAXIS aplicar políticas de segurança corporativas</string>
+    
+    <!-- Pairing Screen -->
+    <string name="pairing_title">Bem-vindo ao FRIAXIS</string>
+    <string name="pairing_subtitle">Para começar, insira o código de emparelhamento fornecido pelo administrador</string>
+    <string name="pairing_code_label">Código de Emparelhamento</string>
+    <string name="pairing_code_placeholder">Ex: ABC123</string>
+    <string name="pairing_button">Emparelhar Dispositivo</string>
+    <string name="pairing_help_title">Como obter o código?</string>
+    <string name="pairing_help_text">1. Acesse o painel web do FRIAXIS\n2. Vá em \'Dispositivos Pendentes\'\n3. Clique em \'Gerar Código\'\n4. Use o código de 6 caracteres gerado</string>
+    
+    <!-- Setup (Legacy) -->
     <string name="setup_title">Configuração do SDB</string>
     <string name="setup_description">Configure seu dispositivo para conectar ao sistema SDB</string>
     <string name="server_url">URL do Servidor</string>
     <string name="device_name">Nome do Dispositivo</string>
     <string name="register_device">Registrar Dispositivo</string>
+    
+    <!-- Error Messages -->
+    <string name="error_invalid_code">Código de emparelhamento inválido</string>
+    <string name="error_expired_code">Código de emparelhamento expirado</string>
+    <string name="error_network">Erro de conexão. Verifique sua internet</string>
+    <string name="error_pairing_generic">Erro no emparelhamento. Tente novamente</string>
+    <string name="error_unexpected">Erro inesperado. Tente novamente</string>
+    <string name="error_empty_code">Por favor, insira o código de emparelhamento</string>
+    <string name="error_sync_data">Erro ao sincronizar dados</string>
+    <string name="error_execute_command">Erro ao executar comando</string>
+    
+    <!-- Dashboard -->
+    <string name="dashboard_title">FRIAXIS</string>
+    <string name="device_status_title">Status do Dispositivo</string>
+    <string name="device_status_online">ONLINE</string>
+    <string name="device_status_offline">OFFLINE</string>
+    <string name="organization_title">Organização</string>
+    <string name="pending_commands_title">Comandos Pendentes</string>
+    <string name="recent_commands_title">Comandos Recentes</string>
+    <string name="active_policies_title">Políticas Ativas</string>
+    <string name="last_seen_label">Última comunicação:</string>
+    <string name="plan_label">Plano:</string>
+    <string name="priority_label">Prioridade:</string>
+    <string name="category_label">Categoria:</string>
+    <string name="execute_button">Executar</string>
+    
+    <!-- Command Types -->
+    <string name="command_sync_policies">Sincronizar Políticas</string>
+    <string name="command_update_app">Atualizar Aplicativo</string>
+    <string name="command_restart_device">Reiniciar Dispositivo</string>
+    <string name="command_lock_device">Bloquear Dispositivo</string>
+    <string name="command_unlock_device">Desbloquear Dispositivo</string>
+    <string name="command_wipe_device">Limpar Dispositivo</string>
+    <string name="command_get_location">Obter Localização</string>
+    <string name="command_get_device_info">Obter Informações</string>
+    <string name="command_install_app">Instalar App</string>
+    <string name="command_uninstall_app">Desinstalar App</string>
+    <string name="command_enable_wifi">Habilitar WiFi</string>
+    <string name="command_disable_wifi">Desabilitar WiFi</string>
+    <string name="command_custom">Comando Personalizado</string>
+    
+    <!-- Command Status -->
+    <string name="status_pending">PENDENTE</string>
+    <string name="status_executing">EXECUTANDO</string>
+    <string name="status_completed">CONCLUÍDO</string>
+    <string name="status_failed">FALHOU</string>
+    <string name="status_expired">EXPIRADO</string>
+    <string name="status_cancelled">CANCELADO</string>
+    
+    <!-- Common Actions -->
+    <string name="action_refresh">Atualizar</string>
     <string name="settings">Configurações</string>
+    <string name="action_retry">Tentar Novamente</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_ok">OK</string>
+    
+    <!-- Permissions -->
     <string name="admin_required">Permissões de administrador são obrigatórias</string>
     <string name="location_permission_required">Permissão de localização é obrigatória</string>
+    
+    <!-- Content Descriptions -->
+    <string name="content_desc_logo">FRIAXIS Logo</string>
+    <string name="content_desc_info">Informação</string>
+    <string name="content_desc_refresh">Atualizar</string>
+    <string name="content_desc_settings">Configurações</string>
+    
+    <!-- Notifications -->
+    <string name="notification_channel_commands">Comandos MDM</string>
+    <string name="notification_channel_commands_desc">Notificações sobre comandos MDM recebidos</string>
+    <string name="notification_channel_sync">Sincronização</string>
+    <string name="notification_channel_sync_desc">Notificações sobre sincronização de dados</string>
+    <string name="notification_command_received">Novo comando recebido</string>
+    <string name="notification_sync_completed">Sincronização concluída</string>
+    
+    <!-- General -->
+    <string name="loading">Carregando...</string>
+    <string name="not_available">N/A</string>
+    <string name="android_version">Android %s</string>
 </resources>

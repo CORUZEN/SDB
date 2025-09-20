@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { apiGet } from '@/lib/api-client';
 import { 
   Users, 
   Shield, 
@@ -69,79 +70,86 @@ export default function DashboardPage() {
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
 
   useEffect(() => {
-    // Simulação de dados - substituir por chamadas de API reais
+    // Carregar dados reais do dashboard via APIs
     const loadDashboardData = async () => {
-      // Mock dados - substituir por fetch das APIs
-      const totalDevices = Math.floor(Math.random() * 50) + 10; // Mock
-      const activeDevices = Math.floor(totalDevices * 0.8); // Mock
-      const offlineDevices = Math.floor(totalDevices * 0.15); // Mock
-      const inactiveDevices = totalDevices - activeDevices - offlineDevices;
-      const complianceRate = Math.floor(Math.random() * 20) + 80; // Mock
-      const todayCommands = Math.floor(Math.random() * 50) + 20; // Mock
-      const successRate = Math.floor(Math.random() * 20) + 80; // Mock
-      const criticalAlerts = Math.floor(Math.random() * 5); // Mock
-      const pendingPolicies = Math.floor(Math.random() * 3); // Mock
+      try {
+        // Carregar dados reais de dispositivos
+        const devicesResult = await apiGet('/api/devices');
+        const commandsResult = await apiGet('/api/commands');
+        const policiesResult = await apiGet('/api/policies');
+        
+        // Calcular métricas reais
+        const totalDevices = devicesResult.data?.length || 0;
+        const activeDevices = devicesResult.data?.filter((d: any) => d.status === 'online').length || 0;
+        const offlineDevices = devicesResult.data?.filter((d: any) => d.status === 'offline').length || 0;
+        const inactiveDevices = devicesResult.data?.filter((d: any) => d.status === 'inactive').length || 0;
+        
+        // Calcular comandos de hoje
+        const today = new Date().toISOString().split('T')[0];
+        const todayCommands = commandsResult.data?.filter((c: any) => 
+          c.created_at?.startsWith(today)
+        ).length || 0;
+        
+        // Calcular taxa de sucesso
+        const completedCommands = commandsResult.data?.filter((c: any) => 
+          c.status === 'completed'
+        ).length || 0;
+        const successRate = commandsResult.data?.length > 0 ? 
+          Math.round((completedCommands / commandsResult.data.length) * 100) : 0;
+        
+        // Calcular taxa de conformidade (dispositivos com políticas aplicadas)
+        const devicesWithPolicies = devicesResult.data?.filter((d: any) => 
+          d.policy_id
+        ).length || 0;
+        const complianceRate = totalDevices > 0 ? 
+          Math.round((devicesWithPolicies / totalDevices) * 100) : 0;
+        
+        setMetrics({
+          totalDevices,
+          activeDevices,
+          offlineDevices,
+          complianceRate,
+          todayCommands,
+          successRate,
+          criticalAlerts: 0, // TODO: Implementar alertas
+          pendingPolicies: policiesResult.data?.filter((p: any) => !p.is_active).length || 0
+        });
 
-      setMetrics({
-        totalDevices,
-        activeDevices,
-        offlineDevices,
-        complianceRate,
-        todayCommands,
-        successRate,
-        criticalAlerts,
-        pendingPolicies
-      });
+        setDeviceStatus({
+          online: activeDevices,
+          offline: offlineDevices,
+          inactive: inactiveDevices
+        });
 
-      setDeviceStatus({
-        online: activeDevices,
-        offline: offlineDevices,
-        inactive: inactiveDevices
-      });
+        // Carregar atividade recente real
+        const eventsResult = await apiGet('/api/events?limit=5');
+        
+        const recentEvents = eventsResult.data?.map((event: any) => ({
+          id: event.id,
+          type: event.event_type || 'info',
+          title: event.event_name || 'Evento',
+          description: event.description || 'Sem descrição',
+          timestamp: event.created_at || new Date().toISOString(),
+          status: event.severity === 'critical' ? 'error' : 
+                 event.severity === 'warning' ? 'warning' : 'success'
+        })) || [];
 
-      // Mock de atividade recente
-      setRecentActivity([
-        {
-          id: '1',
-          type: 'command',
-          title: 'Comando PING executado',
-          description: 'Smartphone Principal respondeu com sucesso',
-          timestamp: new Date(Date.now() - 5 * 60000).toISOString(),
-          status: 'success'
-        },
-        {
-          id: '2',
-          type: 'device',
-          title: 'Novo dispositivo conectado',
-          description: 'Tablet Trabalho se conectou',
-          timestamp: new Date(Date.now() - 15 * 60000).toISOString(),
-          status: 'info'
-        },
-        {
-          id: '3',
-          type: 'alert',
-          title: 'Bateria baixa detectada',
-          description: 'Smartwatch com 15% de bateria',
-          timestamp: new Date(Date.now() - 30 * 60000).toISOString(),
-          status: 'warning'
-        },
-        {
-          id: '4',
-          type: 'policy',
-          title: 'Política aplicada',
-          description: 'Política de segurança ativada em 3 dispositivos',
-          timestamp: new Date(Date.now() - 45 * 60000).toISOString(),
-          status: 'success'
-        },
-        {
-          id: '5',
-          type: 'alert',
-          title: 'Falha de conexão',
-          description: 'Tablet-002 perdeu conexão',
-          timestamp: new Date(Date.now() - 60 * 60000).toISOString(),
-          status: 'error'
-        }
-      ]);
+        setRecentActivity(recentEvents);
+        
+      } catch (error) {
+        console.error('Erro ao carregar dados do dashboard:', error);
+        // Fallback para evitar tela em branco
+        setMetrics({
+          totalDevices: 0,
+          activeDevices: 0,
+          offlineDevices: 0,
+          complianceRate: 0,
+          todayCommands: 0,
+          successRate: 0,
+          criticalAlerts: 0,
+          pendingPolicies: 0
+        });
+      }
     };
 
     loadDashboardData();
@@ -192,7 +200,7 @@ export default function DashboardPage() {
                   <div className="flex items-center mt-2">
                     <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
                     <span className="text-sm font-medium text-green-600">
-                      +{Math.floor(Math.random() * 5) + 1} este mês
+                      Sistema ativo
                     </span>
                   </div>
                 </div>
@@ -328,45 +336,9 @@ export default function DashboardPage() {
               </div>
               
               <div className="space-y-4">
-                {/* Barras de atividade simuladas */}
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">PING</span>
-                    <span className="font-medium">85%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: '85%' }}></div>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">LOCATE</span>
-                    <span className="font-medium">72%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-green-600 h-2 rounded-full" style={{ width: '72%' }}></div>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">POLICY_APPLY</span>
-                    <span className="font-medium">94%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-purple-600 h-2 rounded-full" style={{ width: '94%' }}></div>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">LOCK/UNLOCK</span>
-                    <span className="font-medium">68%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-orange-600 h-2 rounded-full" style={{ width: '68%' }}></div>
-                  </div>
+                {/* Placeholder para quando não há comandos */}
+                <div className="text-center py-8">
+                  <p className="text-sm text-gray-500">Carregando dados de comandos...</p>
                 </div>
               </div>
               

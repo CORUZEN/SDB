@@ -1,0 +1,81 @@
+# ===============================================
+# FRIAXIS v4.0.0 - GITIGNORE PARA ENVIRONMENTS
+# ===============================================
+
+# 🔒 Environment files (NUNCA commitar com dados reais)
+.env
+.env.local
+.env.production
+.env.staging
+
+# ✅ Apenas arquivos de exemplo devem estar no git
+# .env.example ✅
+# .env.local.example ✅
+
+# 🔐 Secrets e credenciais
+*.pem
+*.key
+*.crt
+secrets/
+credentials/
+
+# 🗄️ Database
+*.db
+*.sqlite
+*.sqlite3
+
+# 📁 Node modules
+node_modules/
+.pnpm-store/
+
+# 🏗️ Build outputs
+.next/
+out/
+dist/
+build/
+
+# 📊 Logs
+*.log
+logs/
+.npm/
+
+# 🔧 IDEs
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.swp
+*.swo
+
+# 🚀 Vercel
+.vercel/
+
+# 📱 Android
+*.apk
+*.aab
+android/app/build/
+android/app/release/
+
+# 🍎 iOS (se necessário)
+ios/build/
+*.ipa
+
+# 📊 Coverage reports
+coverage/
+.nyc_output/
+
+# 🧪 Testing
+.jest/
+test-results/
+
+# 📦 Package manager
+.yarn/
+.pnpm-debug.log*
+
+# 🌐 OS generated
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

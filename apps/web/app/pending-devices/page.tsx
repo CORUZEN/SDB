@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Clock, Smartphone, Calendar, CheckCircle, XCircle, AlertTriangle, RotateCcw, Search, Filter, Users, Timer, Activity } from 'lucide-react';
+import { Clock, Smartphone, Calendar, CheckCircle, XCircle, AlertTriangle, RotateCcw, Search, Filter, Users, Timer, Activity, Plus } from 'lucide-react';
 import { DashboardHeader } from '@/components/DashboardHeader';
+import { GenerateCodeModal } from '@/components/GenerateCodeModal';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 interface PendingDevice {
@@ -193,6 +194,7 @@ export default function PendingDevicesPage() {
   const [filter, setFilter] = useState<'all' | 'urgent' | 'fresh'>('all');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [stats, setStats] = useState<DeviceStats>({
     total: 0,
     todayCount: 0,
@@ -389,11 +391,20 @@ export default function PendingDevicesPage() {
         {/* Header da Página */}
         <div className="bg-white border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Dispositivos Pendentes</h1>
-              <p className="mt-1 text-sm text-gray-500">
-                Gerencie solicitações de pareamento com controle temporal inteligente
-              </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Dispositivos Pendentes</h1>
+                <p className="mt-1 text-sm text-gray-500">
+                  Gerencie solicitações de pareamento com controle temporal inteligente
+                </p>
+              </div>
+              <button
+                onClick={() => setShowGenerateModal(true)}
+                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Gerar Código</span>
+              </button>
             </div>
           </div>
         </div>
@@ -551,6 +562,13 @@ export default function PendingDevicesPage() {
             </div>
           )}
         </div>
+
+        {/* Modal de Geração de Código */}
+        <GenerateCodeModal
+          isOpen={showGenerateModal}
+          onClose={() => setShowGenerateModal(false)}
+          onCodeGenerated={() => fetchPendingDevices(false)}
+        />
       </div>
     </ProtectedRoute>
   );

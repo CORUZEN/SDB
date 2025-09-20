@@ -60,6 +60,9 @@ class PolicyService : Service() {
             val deviceName = SDBApplication.instance.sharedPreferences.getString("device_name", model) ?: model
             val lastActivity = System.currentTimeMillis().toString()
 
+            // Usar os dados coletados no device
+            Log.d(TAG, "Telemetria: Battery $batteryLevel%, Android $androidVersion, Model: $model")
+
             // Localização (opcional)
             var location: com.sdb.mdm.model.Location? = null
             try {

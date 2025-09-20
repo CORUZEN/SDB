@@ -1,0 +1,14 @@
+{
+  "name": "friaxis-database-verification",
+  "version": "1.0.0",
+  "description": "Script profissional de verificação do banco de dados FRIAXIS",
+  "type": "module",
+  "scripts": {
+    "verify": "node verify-database.js",
+    "test-db": "node test-database-connection.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "postgres": "^3.4.7"
+  }
+}

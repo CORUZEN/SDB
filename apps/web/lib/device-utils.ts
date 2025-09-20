@@ -1,5 +1,4 @@
 // Utilities for device search and data synchronization
-import { Device } from '@/lib/api-service'
 
 export interface SearchableDevice {
   id: string
@@ -11,107 +10,59 @@ export interface SearchableDevice {
   lastSeen: Date
 }
 
-// Mock devices data - em produção, viria do banco de dados
-export const getAllDevices = (): SearchableDevice[] => {
-  return [
-    {
-      id: 'DESK-001',
-      name: 'Desktop - Sala 1',
-      deviceModel: 'Dell OptiPlex 7090',
-      status: 'online',
-      ownerName: 'Carlos Silva',
-      location: 'São Paulo, SP - Andar 3, Sala 301',
-      lastSeen: new Date(Date.now() - 1000 * 60 * 5) // 5 min atrás
-    },
-    {
-      id: 'MOB-003',
-      name: 'Mobile - João Silva',
-      deviceModel: 'Samsung Galaxy S21',
-      status: 'online',
-      ownerName: 'João Silva',
-      location: 'Rio de Janeiro, RJ - Home Office',
-      lastSeen: new Date(Date.now() - 1000 * 60 * 2) // 2 min atrás
-    },
-    {
-      id: 'TAB-002',
-      name: 'Tablet - Conferência',
-      deviceModel: 'iPad Pro 12.9"',
-      status: 'inactive',
-      ownerName: 'Sala de Reunião',
-      location: 'Brasília, DF - Sala de Conferência A',
-      lastSeen: new Date(Date.now() - 1000 * 60 * 60 * 3) // 3 horas atrás
-    },
-    {
-      id: 'DESK-002',
-      name: 'Desktop - Sala 2',
-      deviceModel: 'HP EliteDesk 800',
-      status: 'offline',
-      ownerName: 'Maria Santos',
-      location: 'São Paulo, SP - Andar 2, Sala 205',
-      lastSeen: new Date(Date.now() - 1000 * 60 * 45) // 45 min atrás
-    },
-    {
-      id: 'DESK-003',
-      name: 'Desktop - Desenvolvimento',
-      deviceModel: 'MacBook Pro M2',
-      status: 'online',
-      ownerName: 'Pedro Costa',
-      location: 'Belo Horizonte, MG - Setor Dev',
-      lastSeen: new Date(Date.now() - 1000 * 60 * 1) // 1 min atrás
-    },
-    {
-      id: 'MOB-005',
-      name: 'iPhone - Ana Clara',
-      deviceModel: 'iPhone 14 Pro',
-      status: 'online',
-      ownerName: 'Ana Clara',
-      location: 'Salvador, BA - Filial Nordeste',
-      lastSeen: new Date(Date.now() - 1000 * 60 * 8) // 8 min atrás
-    },
-    {
-      id: 'TAB-004',
-      name: 'Tablet - Vendas',
-      deviceModel: 'Samsung Galaxy Tab S8',
-      status: 'online',
-      ownerName: 'Equipe Vendas',
-      location: 'Porto Alegre, RS - Setor Comercial',
-      lastSeen: new Date(Date.now() - 1000 * 60 * 12) // 12 min atrás
-    },
-    {
-      id: 'DESK-007',
-      name: 'Workstation - Designer',
-      deviceModel: 'iMac 27" M1',
-      status: 'online',
-      ownerName: 'Sofia Lima',
-      location: 'Recife, PE - Estúdio Criativo',
-      lastSeen: new Date(Date.now() - 1000 * 60 * 3) // 3 min atrás
-    },
-    {
-      id: 'MOB-006',
-      name: 'Android - Roberto',
-      deviceModel: 'Xiaomi Mi 11',
-      status: 'offline',
-      ownerName: 'Roberto Alves',
-      location: 'Curitiba, PR - Departamento TI',
-      lastSeen: new Date(Date.now() - 1000 * 60 * 120) // 2 horas atrás
-    },
-    {
-      id: 'DESK-008',
-      name: 'Notebook - Suporte',
-      deviceModel: 'Lenovo ThinkPad X1',
-      status: 'inactive',
-      ownerName: 'Equipe Suporte',
-      location: 'Fortaleza, CE - Central de Atendimento',
-      lastSeen: new Date(Date.now() - 1000 * 60 * 60 * 6) // 6 horas atrás
+// Função para buscar todos os dispositivos das APIs reais
+export const getAllDevices = async (): Promise<SearchableDevice[]> => {
+  try {
+    const response = await fetch('/api/devices');
+    const data = await response.json();
+    
+    if (!data.success || !data.data) {
+      return [];
     }
-  ]
+    
+    // Converter dados da API para o formato SearchableDevice
+    return data.data.map((device: any) => ({
+      id: device.device_id || device.id,
+      name: device.name || `Device ${device.device_id}`,
+      deviceModel: device.device_model || 'Unknown Model',
+      status: device.status === 'online' ? 'online' : 
+              device.status === 'offline' ? 'offline' : 'inactive',
+      ownerName: device.owner_name || undefined,
+      location: device.location || undefined,
+      lastSeen: device.last_seen ? new Date(device.last_seen) : new Date()
+    }));
+  } catch (error) {
+    console.error('Erro ao buscar dispositivos:', error);
+    return [];
+  }
 }
 
-// Função para buscar dispositivos
-export const searchDevices = (query: string): SearchableDevice[] => {
+// Função para buscar dispositivos com cache local para performance
+let devicesCache: SearchableDevice[] = [];
+let cacheTimestamp = 0;
+const CACHE_DURATION = 30000; // 30 segundos
+
+export const getAllDevicesWithCache = async (): Promise<SearchableDevice[]> => {
+  const now = Date.now();
+  
+  // Se o cache ainda está válido, retornar dados em cache
+  if (devicesCache.length > 0 && (now - cacheTimestamp) < CACHE_DURATION) {
+    return devicesCache;
+  }
+  
+  // Buscar dados atualizados
+  const devices = await getAllDevices();
+  devicesCache = devices;
+  cacheTimestamp = now;
+  
+  return devices;
+}
+
+// Função para buscar dispositivos (versão async)
+export const searchDevices = async (query: string): Promise<SearchableDevice[]> => {
   if (!query.trim()) return []
   
-  const devices = getAllDevices()
+  const devices = await getAllDevicesWithCache();
   const searchTerm = query.toLowerCase()
   
   return devices.filter(device => 

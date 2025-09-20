@@ -172,6 +172,11 @@ const PolicyCard = ({ policy, onEdit, onApply, onToggleStatus }: {
   const [isApplying, setIsApplying] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
 
+  // Verificação de segurança
+  if (!policy || !policy.id) {
+    return null;
+  }
+
   const handleApply = async () => {
     setIsApplying(true);
     try {
@@ -194,7 +199,7 @@ const PolicyCard = ({ policy, onEdit, onApply, onToggleStatus }: {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
-  const config = policy.policy_json as PolicyConfig;
+  const config = (policy.policy_json || {}) as PolicyConfig;
   const rulesCount = Object.keys(config).filter(key => config[key as keyof PolicyConfig] === true || (Array.isArray(config[key as keyof PolicyConfig]) && (config[key as keyof PolicyConfig] as string[]).length > 0)).length;
 
   return (
@@ -360,6 +365,7 @@ export default function PoliciesPage() {
       }
       
       const allPolicies = await policiesApi.getAll(apiFilters);
+      console.log('📋 Políticas carregadas:', allPolicies);
       
       // Filtrar políticas localmente se necessário
       let filteredPolicies = allPolicies;
@@ -396,7 +402,8 @@ export default function PoliciesPage() {
       });
 
     } catch (error) {
-      console.error('Erro ao carregar políticas:', error);
+      console.error('❌ Erro ao carregar políticas:', error);
+      setPolicies([]); // Garantir que sempre seja um array
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -682,7 +689,7 @@ export default function PoliciesPage() {
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-                {policies.map((policy) => (
+                {policies.filter(policy => policy && policy.id).map((policy) => (
                   <PolicyCard
                     key={policy.id}
                     policy={policy}

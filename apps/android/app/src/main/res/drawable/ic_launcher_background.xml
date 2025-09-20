@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- FRIAXIS App Icon Background -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:fillColor="#26A69A"
+    <path android:fillColor="#1976D2"
           android:pathData="M0,0h108v108h-108z"/>
+    
+    <!-- Subtle pattern -->
+    <path
+        android:fillColor="#20FFFFFF"
+        android:pathData="M54,18 L18,32 L18,70 Q18,88 54,108 Q90,88 90,70 L90,32 Z" />
 </vector>

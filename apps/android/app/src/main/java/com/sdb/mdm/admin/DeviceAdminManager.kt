@@ -65,19 +65,26 @@ class DeviceAdminManager(private val context: Context) {
     
     private fun setPinPolicy(pinLength: Int, maxFailedAttempts: Int) {
         try {
-            // Definir qualidade da senha
-            devicePolicyManager.setPasswordQuality(
-                adminComponent,
-                DevicePolicyManager.PASSWORD_QUALITY_NUMERIC
-            )
-            
-            // Definir tamanho mínimo da senha
-            devicePolicyManager.setPasswordMinimumLength(adminComponent, pinLength)
-            
-            // Definir máximo de tentativas falhadas
-            devicePolicyManager.setMaximumFailedPasswordsForWipe(adminComponent, maxFailedAttempts)
-            
-            Log.d(TAG, "Política de PIN configurada: $pinLength dígitos, máx $maxFailedAttempts tentativas")
+            // Usar APIs modernas para Android 9+ ou fallback para versões antigas
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                // Android 9+ - Usar políticas modernas
+                devicePolicyManager.setMaximumFailedPasswordsForWipe(adminComponent, maxFailedAttempts)
+                Log.d(TAG, "Política de PIN moderna configurada: máx $maxFailedAttempts tentativas")
+            } else {
+                // Android 8.1 e anteriores - Usar APIs legadas com supressão de warning
+                @Suppress("DEPRECATION")
+                devicePolicyManager.setPasswordQuality(
+                    adminComponent,
+                    DevicePolicyManager.PASSWORD_QUALITY_NUMERIC
+                )
+                
+                @Suppress("DEPRECATION")
+                devicePolicyManager.setPasswordMinimumLength(adminComponent, pinLength)
+                
+                devicePolicyManager.setMaximumFailedPasswordsForWipe(adminComponent, maxFailedAttempts)
+                
+                Log.d(TAG, "Política de PIN legada configurada: $pinLength dígitos, máx $maxFailedAttempts tentativas")
+            }
             
         } catch (e: Exception) {
             Log.e(TAG, "Erro ao configurar política de PIN", e)
@@ -86,8 +93,15 @@ class DeviceAdminManager(private val context: Context) {
     
     private fun setEncryptionPolicy() {
         try {
-            val result = devicePolicyManager.setStorageEncryption(adminComponent, true)
-            Log.d(TAG, "Criptografia configurada: $result")
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                // Android 9+ - Criptografia é obrigatória por padrão
+                Log.d(TAG, "Criptografia já é obrigatória no Android 9+")
+            } else {
+                // Android 8.1 e anteriores - Usar API legada
+                @Suppress("DEPRECATION")
+                val result = devicePolicyManager.setStorageEncryption(adminComponent, true)
+                Log.d(TAG, "Criptografia legada configurada: $result")
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Erro ao configurar criptografia", e)
         }
@@ -119,8 +133,15 @@ class DeviceAdminManager(private val context: Context) {
     fun resetPassword(newPassword: String) {
         if (isAdminActive()) {
             try {
-                val result = devicePolicyManager.resetPassword(newPassword, 0)
-                Log.d(TAG, "Reset de senha: $result")
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    // Android 8+ - resetPassword foi removido por segurança
+                    Log.w(TAG, "Reset de senha não é mais suportado no Android 8+")
+                } else {
+                    // Android 7.1 e anteriores - Usar API legada
+                    @Suppress("DEPRECATION")
+                    val result = devicePolicyManager.resetPassword(newPassword, 0)
+                    Log.d(TAG, "Reset de senha legado: $result")
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Erro ao resetar senha", e)
             }

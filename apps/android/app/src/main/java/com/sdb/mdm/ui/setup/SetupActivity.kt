@@ -62,6 +62,9 @@ class SetupActivity : AppCompatActivity() {
                 // Gerar device ID único
                 val deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
                 
+                // Salvar device ID para uso posterior
+                SDBApplication.instance.setStoredDeviceId(deviceId)
+                
                 // Criar request de registro
                 val registrationRequest = DeviceRegistrationRequest(
                     name = deviceName,

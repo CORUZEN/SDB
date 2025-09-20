@@ -19,8 +19,15 @@ export async function POST(request: NextRequest) {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           expires_at TIMESTAMP NOT NULL,
           approved_at TIMESTAMP,
-          approved_by VARCHAR(255)
+          approved_by VARCHAR(255),
+          created_by_admin BOOLEAN DEFAULT false
       );
+    `;
+
+    // Adicionar coluna created_by_admin se não existir (para bancos existentes)
+    await sql`
+      ALTER TABLE device_registrations 
+      ADD COLUMN IF NOT EXISTS created_by_admin BOOLEAN DEFAULT false;
     `;
 
     // Criar índices
