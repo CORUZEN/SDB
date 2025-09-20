@@ -50,6 +50,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const token = await user.getIdToken();
       
+      // Store token in localStorage for api-service.ts to use
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('auth-token', token);
+      }
+      
       // Fetch user organization and role from API
       const response = await fetch('/api/organizations/me', {
         headers: {
@@ -86,6 +91,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
         setUser(mockUser as any);
         console.log('🔧 Usuário de desenvolvimento criado:', mockUser.email);
+        
+        // Set mock token for development
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('auth-token', 'dev-token-mock');
+        }
       }
       setLoading(false);
       return;
@@ -101,6 +111,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Load organization context after authentication
         try {
           const token = await user.getIdToken();
+          
+          // Store token in localStorage for api-service.ts to use
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('auth-token', token);
+          }
           
           const response = await fetch('/api/organizations/me', {
             headers: {
@@ -122,10 +137,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Continue even if organization context fails
         }
       } else {
-        // Clear organization context on logout
+        // Clear organization context and token on logout
         setOrganization(null);
         setUserRole(null);
         setPermissions([]);
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth-token');
+        }
       }
       
       setLoading(false);
@@ -164,6 +182,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Log logout
       if (user) {
         console.log(`👋 Usuário fez logout: ${user.email}`);
+      }
+      
+      // Clear auth token from localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth-token');
       }
       
       // Limpar usuário de teste se existir

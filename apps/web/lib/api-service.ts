@@ -25,10 +25,14 @@ async function apiRequest<T>(
     if (options.body) {
       console.log(`📤 Request body:`, JSON.parse(options.body as string));
     }
+
+    // Get auth token from localStorage or use development mock
+    const authToken = (typeof window !== 'undefined' ? localStorage.getItem('auth-token') : null) || 'dev-token-mock';
     
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`,
         ...options.headers,
       },
       ...options,
