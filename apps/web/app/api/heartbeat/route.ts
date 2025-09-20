@@ -11,6 +11,14 @@ const sql = postgres(process.env.DATABASE_URL!, {
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
+export async function GET(request: NextRequest) {
+  return NextResponse.json({
+    message: 'Heartbeat endpoint is working',
+    method: 'GET',
+    timestamp: new Date().toISOString(),
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
