@@ -246,18 +246,20 @@ export function DashboardHeader() {
   // Função de busca com dados reais
   useEffect(() => {
     if (searchQuery.length >= 2) {
-      // Buscar dispositivos reais
-      const devices = searchDevices(searchQuery);
-      
-      // Converter para formato SearchResult
-      const deviceResults: SearchResult[] = devices.map(device => ({
-        id: device.id,
-        type: 'device' as const,
-        title: device.name,
-        subtitle: `${device.ownerName} • ${getStatusName(device.status)} • ${formatLastSeen(device.lastSeen)}`,
-        status: device.status,
-        icon: device.deviceModel.toLowerCase().includes('iphone') || device.deviceModel.toLowerCase().includes('android') || device.deviceModel.toLowerCase().includes('samsung') || device.deviceModel.toLowerCase().includes('xiaomi') ? Smartphone : Monitor,
-        device: device
+      // Buscar dispositivos reais de forma assíncrona
+      const fetchDevices = async () => {
+        try {
+          const devices = await searchDevices(searchQuery);
+          
+          // Converter para formato SearchResult
+          const deviceResults: SearchResult[] = devices.map(device => ({
+            id: device.id,
+            type: 'device' as const,
+            title: device.name,
+            subtitle: `${device.ownerName} • ${getStatusName(device.status)} • ${formatLastSeen(device.lastSeen)}`,
+            status: device.status,
+            icon: device.deviceModel.toLowerCase().includes('iphone') || device.deviceModel.toLowerCase().includes('android') || device.deviceModel.toLowerCase().includes('samsung') || device.deviceModel.toLowerCase().includes('xiaomi') ? Smartphone : Monitor,
+            device: device
       }));
 
       // Adicionar outros tipos de busca (políticas, usuários) - simulados por agora
@@ -284,6 +286,13 @@ export function DashboardHeader() {
       }
 
       setSearchResults([...deviceResults, ...otherResults]);
+        } catch (error) {
+          console.error('Erro ao buscar dispositivos:', error);
+          setSearchResults([]);
+        }
+      };
+      
+      fetchDevices();
     } else {
       setSearchResults([]);
     }
