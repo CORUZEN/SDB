@@ -33,8 +33,32 @@
   @com.google.gson.annotations.SerializedName <fields>;
 }
 
-# Models
+# Models - Keep all model classes
 -keep class com.sdb.mdm.model.** { *; }
+-keep class com.sdb.mdm.data.** { *; }
 
 # Device Admin
 -keep class com.sdb.mdm.admin.SDBDeviceAdminReceiver { *; }
+
+# Hilt/Dagger
+-keep class dagger.hilt.** { *; }
+-keep class javax.inject.** { *; }
+-keep class * extends dagger.hilt.android.HiltAndroidApp { *; }
+
+# Application class
+-keep class com.sdb.mdm.SDBApplication { *; }
+
+# Services
+-keep class com.sdb.mdm.service.** { *; }
+-keep class com.sdb.mdm.fcm.** { *; }
+
+# Keep all Activities and Fragments
+-keep class * extends android.app.Activity { *; }
+-keep class * extends androidx.fragment.app.Fragment { *; }
+
+# Kotlin coroutines
+-keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
+-keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
+
+# Keep crash reporting
+-keepattributes SourceFile,LineNumberTable
