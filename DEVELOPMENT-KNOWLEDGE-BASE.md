@@ -2,13 +2,32 @@
 
 ## 🎯 **Executive Summary**
 
-Este documento consolida **todos os aprendizados, técnicas e best practices** desenvolvidos durante a evolução completa da plataforma FRIAXIS v4.0.0, representando **transformação enterprise-grade** com **zero warnings**, **branding completo** e **qualidade de código profissional**.
+Este documento consolida **todos os aprendizados, técnicas e best practices** desenvolvidos durante a evolução completa da plataforma FRIAXIS v4.0.0, representando **transformação enterprise-grade** com **zero warnings**, **branding completo**, **qualidade de código profissional** e **sistema de heartbeat em tempo real**.
 
 ---
 
 ## 🔧 **POWERSHELL & TERMINAL MASTERY**
 
-### **1. PowerShell Syntax Corrections**
+### **1. Servidor de Desenvolvimento - Janela Separada (CRÍTICO)**
+```powershell
+# 🎯 MÉTODO RECOMENDADO - Servidor em janela separada
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd C:\SDB-clean-clone\apps\web; npm run dev"
+
+# ✅ VANTAGENS:
+# - Não bloqueia o terminal atual
+# - Permite execução de outros comandos
+# - Logs do servidor em janela dedicada
+# - Fácil de fechar quando necessário
+
+# ❌ EVITAR: Comandos que bloqueiam terminal
+npm run dev                     # Bloqueia o terminal
+cd apps/web && npm run dev     # Sintaxe incorreta + bloqueia
+
+# 🔍 VERIFICAÇÃO se servidor está rodando
+netstat -ano | findstr :3001   # Deve mostrar LISTENING
+```
+
+### **2. PowerShell Syntax Corrections**
 ```powershell
 # ❌ COMUM ERROR: Bash syntax no PowerShell
 cd "path" && gradlew assembleDebug  # Erro: && não suportado
@@ -23,32 +42,70 @@ dir "C:\path\*.apk" /b             # Erro: Mistura cmd/PowerShell
 Get-ChildItem "C:\path\*.apk" | Select-Object Name, Length, LastWriteTime
 ```
 
-### **2. Android Build Pipeline - Production Method**
+### **3. API Testing via PowerShell**
+```powershell
+# 🧪 TEMPLATE PADRÃO para testes de API
+$headers = @{'Authorization' = 'Bearer dev-token-mock'}
+$base = "http://localhost:3001"
+
+# GET - Listar dispositivos
+$response = Invoke-WebRequest -Uri "$base/api/devices" -Headers $headers -UseBasicParsing
+$data = $response.Content | ConvertFrom-Json
+$data.data | Select-Object id, name, status
+
+# GET - Device individual
+Invoke-WebRequest -Uri "$base/api/devices/DEVICE_ID" -Headers $headers -UseBasicParsing
+
+# DELETE - Excluir device
+Invoke-WebRequest -Uri "$base/api/devices/DEVICE_ID" -Method DELETE -Headers $headers -UseBasicParsing
+
+# POST - Heartbeat
+$body = @{ 
+    battery_level = 90
+    battery_status = "charging"
+    location_lat = -23.5505
+    location_lng = -46.6333
+} | ConvertTo-Json
+
+Invoke-WebRequest -Uri "$base/api/devices/DEVICE_ID/heartbeat" -Method POST -Body $body -ContentType "application/json" -Headers $headers -UseBasicParsing
+```
+
+### **4. Android Build Pipeline - Production Method**
 ```powershell
 # 🎯 MÉTODO ENTERPRISE - ZERO WARNINGS
 cd "C:\SDB-clean-clone\apps\android"
-cmd.exe /c "gradlew.bat clean assembleDebug"
+.\gradlew clean assembleDebug
 
 # 📋 PIPELINE STEPS:
 # 1. Clean build directory
 # 2. Validate dependencies  
 # 3. Compile Kotlin (zero warnings)
-# 4. Generate APK
+# 4. Generate APK with HeartbeatService
 # 5. Copy to project root
 
 # ✅ VERIFICATION
-Get-ChildItem "app\build\outputs\apk\debug\app-debug.apk" | Select-Object Length
-Copy-Item "app\build\outputs\apk\debug\app-debug.apk" "..\..\FRIAXIS-v4.0.0-debug.apk" -Force
+ls "app\build\outputs\apk\debug\app-debug.apk"
+Copy-Item "app\build\outputs\apk\debug\app-debug.apk" "..\..\SDB-Mobile-v4.0.0-debug.apk"
+
+# 📱 INSTALL via ADB
+adb install -r "C:\SDB-clean-clone\SDB-Mobile-v4.0.0-debug.apk"
 ```
 
-### **3. Common PowerShell Pitfalls & Solutions**
+### **5. Common PowerShell Pitfalls & Solutions**
 ```powershell
+# 🚨 TERMINAL BLOCKING
+# Problem: npm run dev bloqueia terminal
+# Solution: Usar janela separada
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd pasta; comando"
+
 # 🚨 PATH ISSUES
 # Problem: UNC paths com espacos
 # Solution: Sempre usar aspas duplas
 
 # 🚨 COMMAND CONCATENATION  
 # Problem: && syntax do bash
+# Solution: Usar ; ao invés de &&
+```
 # Solution: Use ; ou execute separadamente
 
 # 🚨 FILE OPERATIONS
@@ -58,9 +115,136 @@ Copy-Item "app\build\outputs\apk\debug\app-debug.apk" "..\..\FRIAXIS-v4.0.0-debu
 
 ---
 
+## 💓 **HEARTBEAT SYSTEM & REAL-TIME TELEMETRY**
+
+### **1. Android HeartbeatService Implementation**
+```kotlin
+// ✅ CORRECTED HeartbeatService.kt - Zero Warnings
+class HeartbeatService : Service() {
+    
+    // 🔧 CRITICAL FIXES:
+    // 1. BatteryManager import correto
+    import android.os.BatteryManager  // NÃO android.content.BatteryManager
+    
+    // 2. getStoredDeviceId() method correto  
+    val deviceId = SDBApplication.instance.getStoredDeviceId() // NÃO getDeviceId()
+    if (deviceId.isNullOrEmpty()) { return }  // Null safety
+    
+    // 3. API Response structure correto
+    val body = response.body()  // ApiResponse<HeartbeatResponse>
+    val heartbeatResponse = body?.data  // HeartbeatResponse dentro de data
+    
+    // 4. Coleta de dados de bateria
+    private fun getBatteryLevel(): Int? {
+        return try {
+            val batteryManager = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+            batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+        } catch (e: Exception) {
+            Log.w(TAG, "Erro ao obter nível da bateria", e)
+            null
+        }
+    }
+}
+```
+
+### **2. Status Calculation Logic (API)**
+```sql
+-- 🎯 STATUS DINÂMICO baseado em heartbeat
+CASE 
+  WHEN last_heartbeat IS NOT NULL AND last_heartbeat > NOW() - INTERVAL '5 minutes' THEN 'online'
+  WHEN last_heartbeat IS NOT NULL AND last_heartbeat > NOW() - INTERVAL '30 minutes' THEN 'idle'  
+  ELSE 'offline'
+END as status
+```
+
+### **3. API Heartbeat Endpoint**
+```typescript
+// ✅ POST /api/devices/{id}/heartbeat
+{
+  battery_level: 90,
+  battery_status: "charging",
+  location_lat: -23.5505,
+  location_lng: -46.6333,
+  location_accuracy: 8.2,
+  network_info: { type: "wifi", strength: 75 },
+  app_version: "4.0.0",
+  os_version: "Android 11"
+}
+```
+
+---
+
+## ✏️ **DEVICE CRUD & MODAL SYSTEM**
+
+### **1. EditDeviceModal - Complete Implementation**
+```typescript
+// ✅ DEFENSIVE PROGRAMMING for device properties
+const [formData, setFormData] = useState({
+  name: device?.name || '',
+  owner: device?.owner || '',
+  tags: Array.isArray(device?.tags) ? device.tags.join(', ') : '',
+  status: device?.status || 'offline',
+});
+
+// 🔧 CRITICAL FIX: Null safety for tags property
+// Problem: device.tags pode ser null/undefined
+// Solution: Verificação defensiva antes de .join()
+```
+
+### **2. API Individual Device GET**
+```typescript
+// ✅ COMPLETE RESPONSE STRUCTURE
+const responseData = {
+  id: device.id,
+  name: device.name,
+  device_identifier: device.device_identifier,
+  status: device.status,
+  owner_name: device.owner_name,
+  owner: device.owner || device.owner_name, // compatibility field
+  tags: typeof device.tags === 'string' 
+    ? JSON.parse(device.tags) 
+    : device.tags || [],  // Default to empty array
+  battery_level: device.battery_level,
+  last_heartbeat: device.last_heartbeat?.toISOString() || null,
+  // ... all required fields for modal
+};
+```
+
+### **3. Device DELETE with Cascade**
+```typescript
+// ✅ ROBUST DELETE with related data cleanup
+try {
+  // Clean related tables first
+  await sql`DELETE FROM locations WHERE device_id = ${deviceId}`;
+  await sql`DELETE FROM commands WHERE device_id = ${deviceId}`;  
+  await sql`DELETE FROM events WHERE device_id = ${deviceId}`;
+  
+  // Then delete the device
+  await sql`DELETE FROM devices WHERE id = ${deviceId}`;
+  
+  console.log(`✅ Device deleted successfully: ${deviceId}`);
+} catch (error) {
+  console.error(`❌ Delete error:`, error);
+  // Detailed error logging for debugging
+}
+```
+
+---
+
 ## 🏗️ **ANDROID CODE QUALITY MASTERY**
 
-### **1. API Deprecation Handling Strategy**
+### **1. Import Corrections (Critical)**
+```kotlin
+// ❌ COMMON MISTAKES
+import android.content.BatteryManager     // Wrong package!
+import com.sdb.mdm.model.HeartbeatRequest // Wrong - doesn't exist
+
+// ✅ CORRECT IMPORTS  
+import android.os.BatteryManager          // Correct package
+import com.sdb.mdm.model.Models          // HeartbeatRequest is in Models.kt
+```
+
+### **2. API Deprecation Handling Strategy**
 ```kotlin
 // ✅ VERSIONING PATTERN for deprecated APIs
 private fun setPinPolicy(pinLength: Int, maxFailedAttempts: Int) {
