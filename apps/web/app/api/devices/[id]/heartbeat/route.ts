@@ -44,16 +44,12 @@ export async function POST(
       SET 
         last_heartbeat = NOW(),
         last_seen_at = NOW(),
-        battery_level = ${battery_level},
-        battery_status = ${battery_status},
-        location_lat = ${location_lat},
-        location_lng = ${location_lng},
-        location_accuracy = ${location_accuracy},
-        location_timestamp = CASE 
-          WHEN ${location_lat} IS NOT NULL AND ${location_lng} IS NOT NULL 
-          THEN NOW() 
-          ELSE location_timestamp 
-        END,
+        battery_level = ${battery_level ?? null},
+        battery_status = ${battery_status ?? 'unknown'},
+        location_lat = ${location_lat ?? null},
+        location_lng = ${location_lng ?? null},
+        location_accuracy = ${location_accuracy ?? null},
+        location_timestamp = NOW(),
         network_info = ${network_info ? JSON.stringify(network_info) : null}::jsonb,
         app_version = COALESCE(${app_version}, app_version),
         os_version = COALESCE(${os_version}, os_version),
