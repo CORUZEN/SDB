@@ -9,6 +9,9 @@ import postgres from 'postgres';
 import { z } from 'zod';
 import { resolveOrganizationContext, requirePermission } from '@/lib/organization-middleware';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // ================================
 // Validation Schemas
 // ================================

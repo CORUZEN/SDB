@@ -8,6 +8,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     console.log('🏢 Loading organization context for user...');
@@ -26,7 +29,7 @@ export async function GET(request: NextRequest) {
     // In production, this would verify token and query database
     const mockUserContext = {
       organization: {
-        id: 'org_development_001',
+        id: 1, // Usar ID numérico para consistência com banco
         name: 'Development Organization',
         slug: 'dev-org',
         status: 'active',
