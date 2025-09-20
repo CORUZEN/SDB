@@ -53,7 +53,7 @@ interface SearchResult {
   type: 'device' | 'user' | 'policy';
   title: string;
   subtitle: string;
-  status?: 'online' | 'offline' | 'inactive';
+  status?: 'online' | 'offline' | 'idle' | 'inactive';
   icon: React.ComponentType<{ className?: string }>;
   device?: SearchableDevice;
 }

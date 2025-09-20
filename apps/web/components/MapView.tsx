@@ -30,7 +30,7 @@ interface Location {
 interface Device {
   id: string;
   name: string;
-  status: 'online' | 'offline' | 'inactive';
+  status: 'online' | 'offline' | 'idle' | 'inactive';
   locations?: Location[];
 }
 

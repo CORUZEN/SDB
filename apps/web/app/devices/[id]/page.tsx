@@ -14,7 +14,7 @@ const DeviceMap = dynamic(() => import('../../../components/DeviceMap'), {
 interface Device {
   id: string;
   name: string;
-  status: 'online' | 'offline' | 'inactive';
+  status: 'online' | 'offline' | 'idle' | 'inactive';
   owner: string | null;
   tags: string[];
   last_seen_at: string | null;

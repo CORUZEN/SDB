@@ -26,7 +26,7 @@ import { useAuth } from '@/components/AuthProvider';
 
 // Interfaces
 interface DeviceFilters {
-  status: 'all' | 'online' | 'offline' | 'inactive';
+  status: 'all' | 'online' | 'offline' | 'idle' | 'inactive';
   search: string;
   tag: string;
   owner: string;

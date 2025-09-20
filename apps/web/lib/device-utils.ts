@@ -4,7 +4,7 @@ export interface SearchableDevice {
   id: string
   name: string
   deviceModel: string
-  status: 'online' | 'offline' | 'inactive'
+  status: 'online' | 'offline' | 'idle' | 'inactive'
   ownerName?: string
   location?: string
   lastSeen: Date
