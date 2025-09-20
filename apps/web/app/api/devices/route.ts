@@ -106,7 +106,8 @@ export async function GET(request: NextRequest) {
         last_heartbeat,
         last_seen_at,
         created_at,
-        updated_at
+        updated_at,
+        tags
       FROM devices
       ORDER BY created_at DESC
       LIMIT ${limit}
@@ -140,6 +141,7 @@ export async function GET(request: NextRequest) {
       location_name: device.location_name,
       location_lat: device.location_lat,
       location_lng: device.location_lng,
+      tags: Array.isArray(device.tags) ? device.tags : [], // Ensure tags is always an array
       
       // New device status fields
       battery_level: device.battery_level,

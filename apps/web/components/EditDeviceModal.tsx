@@ -19,10 +19,10 @@ interface EditDeviceModalProps {
 
 export default function EditDeviceModal({ device, isOpen, onClose, onSave, onDelete }: EditDeviceModalProps) {
   const [formData, setFormData] = useState({
-    name: device.name,
+    name: device.name || '',
     owner: device.owner || '',
-    tags: device.tags.join(', '),
-    status: device.status,
+    tags: Array.isArray(device.tags) ? device.tags.join(', ') : '',
+    status: device.status || 'offline',
   });
   
   const [isLoading, setIsLoading] = useState(false);

@@ -161,26 +161,38 @@ export interface Device {
   asset_tag?: string;
   fcm_token?: string;
   last_fcm_update?: string;
-  status: 'online' | 'offline' | 'inactive' | 'maintenance';
-  health_score: number;
-  compliance_status: 'compliant' | 'non_compliant' | 'unknown';
-  device_type: 'smartphone' | 'tablet' | 'laptop' | 'desktop' | 'other';
+  status: 'online' | 'offline' | 'inactive' | 'maintenance' | 'idle';
+  health_score?: number;
+  compliance_status?: 'compliant' | 'non_compliant' | 'unknown';
+  device_type?: 'smartphone' | 'tablet' | 'laptop' | 'desktop' | 'other';
   manufacturer?: string;
   model?: string;
-  os_type: 'android' | 'ios' | 'windows' | 'macos' | 'linux';
+  os_type?: 'android' | 'ios' | 'windows' | 'macos' | 'linux';
   os_version?: string;
   app_version?: string;
   owner_name?: string;
   owner_email?: string;
   department?: string;
   location_name?: string;
+  location_lat?: number;
+  location_lng?: number;
   physical_location?: PhysicalLocation;
   tags: string[];
-  metadata: Record<string, any>;
-  settings: DeviceSettings;
+  metadata?: Record<string, any>;
+  settings?: DeviceSettings;
+  
+  // New heartbeat and telemetry fields
+  battery_level?: number;
+  battery_status?: string;
+  location_accuracy?: number;
+  location_timestamp?: string;
+  network_info?: string;
+  last_heartbeat?: string;
+  
+  // Timestamps
   last_seen_at?: string;
   last_checkin_at?: string;
-  first_enrolled_at: string;
+  first_enrolled_at?: string;
   enrolled_by?: string;
   created_at: string;
   updated_at: string;
