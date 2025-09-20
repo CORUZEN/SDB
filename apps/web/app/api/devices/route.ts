@@ -17,7 +17,7 @@ import { resolveOrganizationContext, requirePermission } from '@/lib/organizatio
 const deviceQuerySchema = z.object({
   page: z.string().optional().transform(val => val ? parseInt(val, 10) : 1),
   limit: z.string().optional().transform(val => val ? parseInt(val, 10) : 20),
-  status: z.enum(['online', 'offline', 'maintenance', 'error']).optional(),
+  status: z.enum(['online', 'offline', 'idle', 'maintenance', 'error']).optional(),
   device_type: z.string().optional(),
   search: z.string().optional(),
   sort: z.enum(['name', 'status', 'last_seen', 'created_at']).optional().default('created_at'),
@@ -81,7 +81,11 @@ export async function GET(request: NextRequest) {
         name,
         device_identifier,
         fcm_token,
-        status,
+        CASE 
+          WHEN last_heartbeat IS NOT NULL AND last_heartbeat > NOW() - INTERVAL '5 minutes' THEN 'online'
+          WHEN last_heartbeat IS NOT NULL AND last_heartbeat > NOW() - INTERVAL '30 minutes' THEN 'idle'
+          ELSE 'offline'
+        END as status,
         device_type,
         manufacturer,
         model,
@@ -94,6 +98,12 @@ export async function GET(request: NextRequest) {
         location_name,
         location_lat,
         location_lng,
+        battery_level,
+        battery_status,
+        location_accuracy,
+        location_timestamp,
+        network_info,
+        last_heartbeat,
         last_seen_at,
         created_at,
         updated_at
@@ -110,14 +120,14 @@ export async function GET(request: NextRequest) {
 
     console.log(`✅ Found ${devices.length} devices in database`);
 
-    // 6. Format response
+    // 6. Format response with new fields
     const formattedDevices = devices.map((device: any) => ({
       id: device.id,
       organization_id: device.organization_id,
       name: device.name,
       device_identifier: device.device_identifier,
       fcm_token: device.fcm_token,
-      status: device.status,
+      status: device.status, // Now calculated dynamically
       device_type: device.device_type,
       manufacturer: device.manufacturer,
       model: device.model,
@@ -130,6 +140,16 @@ export async function GET(request: NextRequest) {
       location_name: device.location_name,
       location_lat: device.location_lat,
       location_lng: device.location_lng,
+      
+      // New device status fields
+      battery_level: device.battery_level,
+      battery_status: device.battery_status,
+      location_accuracy: device.location_accuracy,
+      location_timestamp: device.location_timestamp?.toISOString() || null,
+      network_info: device.network_info,
+      last_heartbeat: device.last_heartbeat?.toISOString() || null,
+      
+      // Timestamps
       last_seen_at: device.last_seen_at?.toISOString() || null,
       created_at: device.created_at?.toISOString() || null,
       updated_at: device.updated_at?.toISOString() || null,

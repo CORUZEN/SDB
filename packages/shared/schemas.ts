@@ -56,7 +56,7 @@ export const CommandSchema = z.object({
 // Device Schemas
 // ================================
 
-export const DeviceStatusSchema = z.enum(['online', 'offline', 'inactive']);
+export const DeviceStatusSchema = z.enum(['online', 'offline', 'idle', 'inactive']);
 
 export const DeviceSchema = z.object({
   id: UUIDSchema,
@@ -66,8 +66,25 @@ export const DeviceSchema = z.object({
   owner: z.string().max(255).nullable(),
   tags: z.array(z.string()),
   last_seen_at: DateTimeSchema.nullable(),
+  
+  // Battery information
   battery_level: z.number().int().min(0).max(100).nullable(),
+  battery_status: z.enum(['charging', 'discharging', 'not_charging', 'full', 'unknown']).nullable(),
+  
+  // Location information
+  location_lat: z.number().nullable(),
+  location_lng: z.number().nullable(),
+  location_accuracy: z.number().nullable(),
+  location_timestamp: DateTimeSchema.nullable(),
+  
+  // Network and system info
+  network_info: z.record(z.any()).nullable(),
   os_version: z.string().max(100).nullable(),
+  app_version: z.string().max(100).nullable(),
+  
+  // Connectivity tracking
+  last_heartbeat: DateTimeSchema.nullable(),
+  
   ssid: z.string().max(255).nullable(),
   app_in_foreground: z.string().max(255).nullable(),
   created_at: DateTimeSchema,
@@ -76,7 +93,13 @@ export const DeviceSchema = z.object({
 
 export const DeviceReportSchema = z.object({
   battery_level: z.number().int().min(0).max(100).optional(),
+  battery_status: z.enum(['charging', 'discharging', 'not_charging', 'full', 'unknown']).optional(),
+  location_lat: z.number().optional(),
+  location_lng: z.number().optional(),
+  location_accuracy: z.number().optional(),
+  network_info: z.record(z.any()).optional(),
   os_version: z.string().max(100).optional(),
+  app_version: z.string().max(100).optional(),
   ssid: z.string().max(255).optional(),
   app_in_foreground: z.string().max(255).optional(),
   status: DeviceStatusSchema,
