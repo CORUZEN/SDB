@@ -39,15 +39,31 @@ export async function GET(
     const responseData = {
       id: device.id,
       name: device.name,
-      type: device.type,
-      status: device.status,
-      battery_level: device.battery_level,
-      last_seen: device.last_seen,
-      created_at: device.created_at,
-      updated_at: device.updated_at,
-      user_id: device.user_id,
+      device_identifier: device.device_identifier,
       fcm_token: device.fcm_token,
+      status: device.status,
+      device_type: device.device_type,
+      manufacturer: device.manufacturer,
+      model: device.model,
+      os_type: device.os_type,
       os_version: device.os_version,
+      app_version: device.app_version,
+      owner_name: device.owner_name,
+      owner: device.owner || device.owner_name, // compatibility
+      owner_email: device.owner_email,
+      department: device.department,
+      location_name: device.location_name,
+      location_lat: device.location_lat,
+      location_lng: device.location_lng,
+      battery_level: device.battery_level,
+      battery_status: device.battery_status,
+      location_accuracy: device.location_accuracy,
+      location_timestamp: device.location_timestamp?.toISOString() || null,
+      network_info: device.network_info,
+      last_heartbeat: device.last_heartbeat?.toISOString() || null,
+      last_seen_at: device.last_seen_at?.toISOString() || null,
+      created_at: device.created_at?.toISOString() || null,
+      updated_at: device.updated_at?.toISOString() || null,
       ssid: device.ssid,
       app_in_foreground: device.app_in_foreground,
       tags: typeof device.tags === 'string' 
@@ -226,6 +242,8 @@ export async function DELETE(
   const sql = postgres(process.env.DATABASE_URL!, { ssl: 'require' });
 
   try {
+    console.log(`🗑️ Tentando deletar dispositivo: ${deviceId}`);
+    
     // Verificar se o dispositivo existe
     const devices = await sql`
       SELECT id FROM devices WHERE id = ${deviceId}
@@ -233,20 +251,40 @@ export async function DELETE(
 
     if (devices.length === 0) {
       await sql.end();
+      console.log(`❌ Dispositivo não encontrado: ${deviceId}`);
       return NextResponse.json(
         { error: 'Dispositivo não encontrado' },
         { status: 404 }
       );
     }
 
-    // Deletar localizações relacionadas
-    await sql`DELETE FROM locations WHERE device_id = ${deviceId}`;
+    console.log(`✅ Dispositivo encontrado, prosseguindo com deleção: ${deviceId}`);
+
+    // Deletar relacionamentos primeiro (se existirem)
+    try {
+      await sql`DELETE FROM locations WHERE device_id = ${deviceId}`;
+      console.log(`✅ Localizações deletadas para dispositivo: ${deviceId}`);
+    } catch (error) {
+      console.log(`⚠️ Erro ao deletar localizações (pode não existir): ${error}`);
+    }
     
-    // Deletar comandos relacionados
-    await sql`DELETE FROM commands WHERE device_id = ${deviceId}`;
+    try {
+      await sql`DELETE FROM commands WHERE device_id = ${deviceId}`;
+      console.log(`✅ Comandos deletados para dispositivo: ${deviceId}`);
+    } catch (error) {
+      console.log(`⚠️ Erro ao deletar comandos (pode não existir): ${error}`);
+    }
+    
+    try {
+      await sql`DELETE FROM events WHERE device_id = ${deviceId}`;
+      console.log(`✅ Eventos deletados para dispositivo: ${deviceId}`);
+    } catch (error) {
+      console.log(`⚠️ Erro ao deletar eventos (pode não existir): ${error}`);
+    }
     
     // Deletar o dispositivo
-    await sql`DELETE FROM devices WHERE id = ${deviceId}`;
+    const deleteResult = await sql`DELETE FROM devices WHERE id = ${deviceId}`;
+    console.log(`✅ Dispositivo deletado: ${deviceId}`, deleteResult);
 
     await sql.end();
 
@@ -257,9 +295,10 @@ export async function DELETE(
 
   } catch (error) {
     await sql.end();
-    console.error('Erro ao deletar dispositivo:', error);
+    console.error('❌ Erro ao deletar dispositivo:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { error: 'Erro interno do servidor', details: errorMessage },
       { status: 500 }
     );
   }
