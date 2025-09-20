@@ -7,11 +7,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import postgres from 'postgres';
 
-// Database connection
-const sql = postgres(process.env.DATABASE_URL!, {
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-});
-
 // ================================
 // POST /api/devices/[id]/heartbeat
 // ================================
@@ -20,11 +15,18 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  let sql: any;
+  
   try {
     const deviceId = params.id;
     const body = await request.json();
     
     console.log(`💓 Heartbeat received from device: ${deviceId}`);
+
+    // Create database connection
+    sql = postgres(process.env.DATABASE_URL!, {
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    });
 
     // Extract device status data from request body
     const {
@@ -44,15 +46,12 @@ export async function POST(
       SET 
         last_heartbeat = NOW(),
         last_seen_at = NOW(),
-        battery_level = ${battery_level ?? null},
-        battery_status = ${battery_status ?? 'unknown'},
-        location_lat = ${location_lat ?? null},
-        location_lng = ${location_lng ?? null},
-        location_accuracy = ${location_accuracy ?? null},
+        battery_level = ${battery_level || null},
+        battery_status = ${battery_status || 'unknown'},
+        location_lat = ${location_lat || null},
+        location_lng = ${location_lng || null},
+        location_accuracy = ${location_accuracy || null},
         location_timestamp = NOW(),
-        network_info = ${network_info ? JSON.stringify(network_info) : null}::jsonb,
-        app_version = COALESCE(${app_version}, app_version),
-        os_version = COALESCE(${os_version}, os_version),
         updated_at = NOW()
       WHERE id = ${deviceId}
       RETURNING 
@@ -95,7 +94,13 @@ export async function POST(
   } catch (error: unknown) {
     console.error('❌ Error recording heartbeat:', error);
     
-    await sql.end();
+    if (sql) {
+      try {
+        await sql.end();
+      } catch (endError) {
+        console.error('Error closing database connection:', endError);
+      }
+    }
     
     return NextResponse.json(
       { 
