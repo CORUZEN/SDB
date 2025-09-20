@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
         'users:manage',
       ],
       user: {
-        id: 'user_dev_001',
+        id: 1, // Usar ID numérico para compatibilidade com banco
         email: 'dev@teste.com',
         name: 'Usuário de Desenvolvimento',
         status: 'active',

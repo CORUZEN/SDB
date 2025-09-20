@@ -21,7 +21,7 @@ async function getOrganizationContext(request: NextRequest) {
         slug: 'dev-org'
       },
       user: {
-        id: 'user_dev_001',
+        id: 1, // Usar ID numérico para compatibilidade com banco
         role: 'admin',
         permissions: ['devices:read', 'devices:write', 'devices:admin']
       }
@@ -44,7 +44,7 @@ async function getOrganizationContext(request: NextRequest) {
       slug: 'dev-org'
     },
     user: {
-      id: 'user_dev_001',
+      id: 1, // Usar ID numérico para compatibilidade com banco
       role: 'admin',
       permissions: ['devices:read', 'devices:write', 'devices:admin']
     }
