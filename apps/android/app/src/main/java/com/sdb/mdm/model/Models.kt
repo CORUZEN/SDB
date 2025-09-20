@@ -106,3 +106,33 @@ data class RegistrationStatusResponse(
     @SerializedName("status") val status: String,
     @SerializedName("approved") val approved: Boolean
 )
+
+data class HeartbeatRequest(
+    @SerializedName("battery_level") val batteryLevel: Int?,
+    @SerializedName("battery_status") val batteryStatus: String?,
+    @SerializedName("location_lat") val locationLat: Double?,
+    @SerializedName("location_lng") val locationLng: Double?,
+    @SerializedName("location_accuracy") val locationAccuracy: Float?,
+    @SerializedName("network_info") val networkInfo: NetworkInfo?,
+    @SerializedName("app_version") val appVersion: String?,
+    @SerializedName("os_version") val osVersion: String?
+)
+
+data class HeartbeatResponse(
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("message") val message: String,
+    @SerializedName("device") val device: HeartbeatDeviceInfo?,
+    @SerializedName("timestamp") val timestamp: String
+)
+
+data class HeartbeatDeviceInfo(
+    @SerializedName("id") val id: String,
+    @SerializedName("name") val name: String,
+    @SerializedName("last_heartbeat") val lastHeartbeat: String,
+    @SerializedName("status") val status: String
+)
+
+data class NetworkInfo(
+    @SerializedName("type") val type: String,
+    @SerializedName("strength") val strength: Int?
+)

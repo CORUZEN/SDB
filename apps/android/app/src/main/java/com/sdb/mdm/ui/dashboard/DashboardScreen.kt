@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -17,6 +18,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sdb.mdm.data.model.Command
 import com.sdb.mdm.data.model.CommandStatus
 import com.sdb.mdm.data.model.CommandType
+import com.sdb.mdm.service.HeartbeatService
 import com.sdb.mdm.ui.theme.SDBTheme
 import java.text.SimpleDateFormat
 import java.util.*
@@ -31,6 +33,12 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    
+    // Iniciar HeartbeatService quando o dashboard carrega (dispositivo aprovado)
+    LaunchedEffect(Unit) {
+        HeartbeatService.start(context)
+    }
     
     SDBTheme {
         Scaffold(

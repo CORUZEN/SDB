@@ -6,6 +6,7 @@ import android.content.Intent
 import android.util.Log
 import com.sdb.mdm.SDBApplication
 import com.sdb.mdm.service.PolicyService
+import com.sdb.mdm.service.HeartbeatService
 
 class BootReceiver : BroadcastReceiver() {
     
@@ -34,7 +35,11 @@ class BootReceiver : BroadcastReceiver() {
             val policyIntent = Intent(context, PolicyService::class.java)
             context.startService(policyIntent)
             
-            Log.d(TAG, "Serviços iniciados após boot")
+            // Iniciar serviço de heartbeat para manter dispositivo online
+            val heartbeatIntent = Intent(context, HeartbeatService::class.java)
+            context.startService(heartbeatIntent)
+            
+            Log.d(TAG, "Serviços iniciados após boot (PolicyService + HeartbeatService)")
             
         } catch (e: Exception) {
             Log.e(TAG, "Erro ao iniciar serviços após boot", e)

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import EditDeviceModal from '@/components/EditDeviceModal';
 import { 
   Smartphone, 
   Wifi, 
@@ -216,6 +217,7 @@ export default function DevicesPage() {
   const [devices, setDevices] = useState<DeviceType[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [editingDevice, setEditingDevice] = useState<DeviceType | null>(null);
   const [stats, setStats] = useState<DeviceStats>({
     total: 0,
     online: 0,
@@ -336,12 +338,48 @@ export default function DevicesPage() {
   };
 
   const handleEditDevice = (device: DeviceType) => {
-    // TODO: Implementar modal de edição
-    console.log('Editar dispositivo:', device.id);
+    setEditingDevice(device);
+  };
+
+  const handleSaveDevice = async (deviceId: string, updates: {
+    name?: string;
+    owner?: string;
+    tags?: string[];
+    status?: DeviceType['status'];
+  }) => {
+    try {
+      const updatedDevice = await devicesApi.update(deviceId, updates);
+      
+      // Atualizar a lista de dispositivos
+      setDevices(prev => prev.map(d => 
+        d.id === deviceId ? { ...d, ...updatedDevice } : d
+      ));
+      
+      setEditingDevice(null);
+    } catch (error) {
+      console.error('Erro ao salvar dispositivo:', error);
+      throw error;
+    }
+  };
+
+  const handleDeleteDevice = async (deviceId: string) => {
+    try {
+      await devicesApi.delete(deviceId);
+      
+      // Remover da lista de dispositivos
+      setDevices(prev => prev.filter(d => d.id !== deviceId));
+      
+      setEditingDevice(null);
+      
+      // Recarregar estatísticas
+      await loadDevices(pagination.page);
+    } catch (error) {
+      console.error('Erro ao excluir dispositivo:', error);
+      throw error;
+    }
   };
 
   const handleLocateDevice = async (deviceId: string) => {
-    // TODO: Implementar localização
     console.log('Localizar dispositivo:', deviceId);
     await new Promise(resolve => setTimeout(resolve, 2000)); // Simular delay
   };
@@ -629,6 +667,17 @@ export default function DevicesPage() {
             </>
           )}
         </main>
+        
+        {/* Modal de Edição */}
+        {editingDevice && (
+          <EditDeviceModal
+            device={editingDevice}
+            isOpen={true}
+            onClose={() => setEditingDevice(null)}
+            onSave={handleSaveDevice}
+            onDelete={handleDeleteDevice}
+          />
+        )}
       </div>
     </ProtectedRoute>
   );

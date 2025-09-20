@@ -38,4 +38,10 @@ interface ApiService {
         @Path("id") deviceId: String,
         @Body event: Map<String, Any>
     ): Response<ApiResponse<Unit>>
+    
+    @POST("api/devices/{id}/heartbeat")
+    suspend fun sendHeartbeat(
+        @Path("id") deviceId: String,
+        @Body heartbeat: HeartbeatRequest
+    ): Response<ApiResponse<HeartbeatResponse>>
 }
