@@ -1,7 +1,7 @@
 package com.sdb.mdm.service
 
 import android.app.Service
-import android.content.BatteryManager
+import android.os.BatteryManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -101,8 +101,8 @@ class HeartbeatService : Service() {
         try {
             Log.d(TAG, "💓 Enviando heartbeat...")
             
-            val deviceId = SDBApplication.instance.getDeviceId()
-            if (deviceId.isEmpty()) {
+            val deviceId = SDBApplication.instance.getStoredDeviceId()
+            if (deviceId.isNullOrEmpty()) {
                 Log.w(TAG, "Device ID não encontrado")
                 return
             }
@@ -117,8 +117,9 @@ class HeartbeatService : Service() {
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body?.success == true) {
+                    val heartbeatResponse = body.data
                     Log.d(TAG, "✅ Heartbeat enviado com sucesso")
-                    Log.d(TAG, "   Status: ${body.device?.status}")
+                    Log.d(TAG, "   Status: ${heartbeatResponse?.device?.status}")
                     Log.d(TAG, "   Bateria: ${heartbeatData.batteryLevel}%")
                 } else {
                     Log.w(TAG, "⚠️ Heartbeat falhou: ${body?.error}")
