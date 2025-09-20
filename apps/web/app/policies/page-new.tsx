@@ -412,12 +412,12 @@ export default function PoliciesPage() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [filters.search, filters.status]);
+  }, [filters.search, filters.status, filters, loadPolicies]);
 
   // Carregar dados iniciais
   useEffect(() => {
     loadPolicies();
-  }, []);
+  }, [loadPolicies]);
 
   // Handlers
   const handleRefresh = () => {

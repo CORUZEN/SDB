@@ -311,12 +311,12 @@ export default function DevicesPage() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [filters.search, filters.status, filters.tag]);
+  }, [filters.search, filters.status, filters.tag, filters, loadDevices]);
 
   // Carregar dados iniciais
   useEffect(() => {
     loadDevices();
-  }, []);
+  }, [loadDevices]);
 
   // Handlers
   const handleRefresh = () => {

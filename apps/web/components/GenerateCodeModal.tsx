@@ -173,7 +173,7 @@ export const GenerateCodeModal = ({ isOpen, onClose, onCodeGenerated }: Generate
                     <ol className="list-decimal list-inside space-y-1 text-xs">
                       <li>Abra o app FRIAXIS no dispositivo Android</li>
                       <li>Digite o código de 6 dígitos gerado</li>
-                      <li>Toque em "Emparelhar Dispositivo"</li>
+                      <li>Toque em &quot;Emparelhar Dispositivo&quot;</li>
                       <li>Aprove o dispositivo aqui no painel web</li>
                     </ol>
                   </div>
@@ -269,7 +269,7 @@ export const GenerateCodeModal = ({ isOpen, onClose, onCodeGenerated }: Generate
                   <Clock className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-yellow-700">
                     <p className="font-medium mb-1">Importante:</p>
-                    <p>O código será exibido na lista "Dispositivos Pendentes" assim que um dispositivo Android o utilizar. Você pode fechar esta janela com segurança.</p>
+                    <p>O código será exibido na lista &quot;Dispositivos Pendentes&quot; assim que um dispositivo Android o utilizar. Você pode fechar esta janela com segurança.</p>
                   </div>
                 </div>
               </div>
