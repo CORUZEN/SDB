@@ -9,7 +9,12 @@ export async function POST(request: NextRequest) {
 
     if (!pairing_code) {
       return NextResponse.json(
-        { success: false, error: 'Código de pareamento é obrigatório' },
+        { 
+          isValid: false,
+          organizationId: "",
+          organizationName: "",
+          expiresAt: null
+        },
         { status: 400 }
       );
     }
@@ -29,7 +34,12 @@ export async function POST(request: NextRequest) {
       await sql.end();
       console.log('❌ Pairing code não encontrado, expirado ou já usado');
       return NextResponse.json(
-        { success: false, error: 'Código de pareamento inválido, expirado ou já utilizado' },
+        { 
+          isValid: false,
+          organizationId: "",
+          organizationName: "",
+          expiresAt: null
+        },
         { status: 404 }
       );
     }
@@ -48,20 +58,22 @@ export async function POST(request: NextRequest) {
     if (existingDevice.length > 0) {
       console.log('⚠️ Dispositivo já existe com este código');
       return NextResponse.json(
-        { success: false, error: 'Este código já foi utilizado por outro dispositivo' },
+        { 
+          isValid: false,
+          organizationId: "",
+          organizationName: "",
+          expiresAt: null
+        },
         { status: 409 }
       );
     }
 
+    // Retornar no formato que o Android app espera (PairingValidationResponse)
     return NextResponse.json({
-      success: true,
-      data: {
-        pairing_code: pairing_code,
-        description: codeData.description,
-        expires_at: codeData.expires_at,
-        created_at: codeData.created_at,
-        message: 'Código válido! Você pode usar este código para pareamento.'
-      }
+      isValid: true,
+      organizationId: "1", // Default organization
+      organizationName: "FRIAXIS Organization",
+      expiresAt: codeData.expires_at
     });
 
   } catch (error: any) {

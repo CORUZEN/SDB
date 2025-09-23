@@ -110,15 +110,28 @@ export async function POST(request: NextRequest) {
     
     console.log('✅ Dispositivo registrado com sucesso:', device.id);
 
+    // Retornar no formato que o Android app espera (Device object)
     return NextResponse.json({ 
-      success: true,
-      data: {
-        device_id: device.id,
-        pairing_code: pairing_code,
-        status: 'pending',
-        message: 'Dispositivo registrado com sucesso! Aguarde aprovação do administrador.',
-        created_at: device.created_at
-      }
+      id: device.id,
+      organization_id: organizationId.toString(),
+      name: device.name,
+      device_identifier: device.device_identifier,
+      serial_number: null,
+      status: device.status,
+      device_type: device.device_type,
+      manufacturer: null,
+      model: device.model,
+      os_type: device.os_type,
+      os_version: device.os_version,
+      app_version: null,
+      last_seen: null,
+      battery_level: null,
+      storage_used: null,
+      storage_total: null,
+      owner_name: device.owner_name,
+      fcm_token: device.fcm_token,
+      created_at: device.created_at,
+      updated_at: device.created_at
     }, { status: 201 });
 
   } catch (error: any) {
