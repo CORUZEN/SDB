@@ -16,38 +16,51 @@ export async function POST(request: NextRequest) {
 
     const sql = postgres(process.env.DATABASE_URL!, { ssl: 'require' });
 
-    // Buscar dispositivo pelo pairing_code no metadata (removido filtro status)
-    const result = await sql`
-      SELECT id, name, device_identifier, status, organization_id, metadata, created_at
-      FROM devices 
-      WHERE metadata->>'pairing_code' = ${pairing_code}
-      AND created_at > NOW() - INTERVAL '24 hours'
+    // Verificar se o código existe na tabela pairing_codes e ainda é válido
+    const codeResult = await sql`
+      SELECT code, description, expires_at, used, created_at
+      FROM pairing_codes 
+      WHERE code = ${pairing_code}
+      AND expires_at > NOW()
+      AND used = FALSE
     `;
 
-    await sql.end();
-
-    if (result.length === 0) {
-      console.log('❌ Pairing code não encontrado ou já aprovado');
+    if (codeResult.length === 0) {
+      await sql.end();
+      console.log('❌ Pairing code não encontrado, expirado ou já usado');
       return NextResponse.json(
-        { success: false, error: 'Código de pareamento inválido ou expirado' },
+        { success: false, error: 'Código de pareamento inválido, expirado ou já utilizado' },
         { status: 404 }
       );
     }
 
-    const device = result[0];
-    console.log('✅ Dispositivo encontrado:', device);
+    const codeData = codeResult[0];
+    console.log('✅ Código válido encontrado:', codeData);
+
+    // Verificar se já existe um dispositivo com este código (evitar duplicatas)
+    const existingDevice = await sql`
+      SELECT id FROM devices 
+      WHERE metadata->>'pairing_code' = ${pairing_code}
+    `;
+
+    await sql.end();
+
+    if (existingDevice.length > 0) {
+      console.log('⚠️ Dispositivo já existe com este código');
+      return NextResponse.json(
+        { success: false, error: 'Este código já foi utilizado por outro dispositivo' },
+        { status: 409 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
       data: {
-        device_id: device.id,
-        name: device.name,
-        device_identifier: device.device_identifier,
-        status: device.status,
-        organization_id: device.organization_id,
-        created_at: device.created_at,
         pairing_code: pairing_code,
-        message: 'Código válido! Dispositivo encontrado e pronto para aprovação.'
+        description: codeData.description,
+        expires_at: codeData.expires_at,
+        created_at: codeData.created_at,
+        message: 'Código válido! Você pode usar este código para pareamento.'
       }
     });
 

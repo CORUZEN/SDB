@@ -71,7 +71,9 @@ class SetupActivity : AppCompatActivity() {
                     model = android.os.Build.MODEL,
                     imei = null, // IMEI não é mais obrigatório no Android 10+
                     androidVersion = android.os.Build.VERSION.RELEASE,
-                    firebaseToken = "" // Será preenchido depois pelo FCM
+                    firebaseToken = "", // Será preenchido depois pelo FCM
+                    pairingCode = "000000", // Código placeholder - não usado na SetupActivity
+                    deviceIdentifier = deviceId
                 )
                 
                 // Tentar registrar no servidor

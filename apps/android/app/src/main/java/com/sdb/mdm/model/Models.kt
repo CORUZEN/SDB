@@ -70,7 +70,9 @@ data class DeviceRegistrationRequest(
     @SerializedName("model") val model: String,
     @SerializedName("imei") val imei: String?,
     @SerializedName("android_version") val androidVersion: String,
-    @SerializedName("firebase_token") val firebaseToken: String
+    @SerializedName("firebase_token") val firebaseToken: String,
+    @SerializedName("pairing_code") val pairingCode: String,
+    @SerializedName("device_identifier") val deviceIdentifier: String?
 )
 
 data class LocationUpdateRequest(

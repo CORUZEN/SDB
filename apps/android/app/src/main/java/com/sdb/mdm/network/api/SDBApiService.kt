@@ -31,10 +31,10 @@ interface SDBApiService {
     
     // Registration endpoints
     @POST("api/devices/validate-pairing")
-    suspend fun validatePairingCode(@Body pairingCode: String): PairingValidationResponse
+    suspend fun validatePairingCode(@Body request: Map<String, String>): PairingValidationResponse
     
-    @POST("api/devices/register")
-    suspend fun registerDevice(@Body registration: DeviceRegistration): Device
+    @POST("api/devices/register")  
+    suspend fun registerDevice(@Body request: Map<String, String>): Device
     
     // Policy endpoints
     @GET("api/policies")

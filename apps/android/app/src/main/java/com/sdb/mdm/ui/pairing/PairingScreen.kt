@@ -1,6 +1,7 @@
 package com.sdb.mdm.ui.pairing
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -42,12 +43,11 @@ fun PairingScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Logo and branding
-                Icon(
-                    painter = painterResource(id = com.sdb.mdm.R.drawable.ic_friaxis_logo),
+                // Logo and branding oficial
+                androidx.compose.foundation.Image(
+                    painter = painterResource(id = com.sdb.mdm.R.drawable.friaxis_logo_official),
                     contentDescription = "FRIAXIS Logo",
-                    modifier = Modifier.size(120.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    modifier = Modifier.size(120.dp)
                 )
                 
                 Spacer(modifier = Modifier.height(32.dp))

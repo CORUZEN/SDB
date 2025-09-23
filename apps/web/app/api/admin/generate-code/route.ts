@@ -44,9 +44,10 @@ export async function POST(request: NextRequest) {
       pairingCode = Math.floor(100000 + Math.random() * 900000).toString();
       
       const existing = await sql`
-        SELECT pairing_code FROM device_registrations 
-        WHERE pairing_code = ${pairingCode} 
+        SELECT code FROM pairing_codes 
+        WHERE code = ${pairingCode} 
         AND expires_at > NOW()
+        AND used = FALSE
       `;
       
       if (existing.length === 0) {
@@ -63,40 +64,40 @@ export async function POST(request: NextRequest) {
       }, 500);
     }
     
-    // Gerar ID único
-    const deviceId = `admin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Criar tabela de códigos temporários se não existir
+    await sql`
+      CREATE TABLE IF NOT EXISTS pairing_codes (
+        code VARCHAR(6) PRIMARY KEY,
+        description TEXT,
+        duration_hours FLOAT DEFAULT 1,
+        created_at TIMESTAMP DEFAULT NOW(),
+        expires_at TIMESTAMP NOT NULL,
+        used BOOLEAN DEFAULT FALSE,
+        organization_id INTEGER DEFAULT 1
+      )
+    `;
 
-    // Inserir registro pendente com nova estrutura
+    // Inserir apenas o código na tabela temporária
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + duration);
     
     const result = await sql`
-      INSERT INTO device_registrations (
-        organization_id,
-        pairing_code,
-        device_info,
-        status,
-        created_by_admin,
+      INSERT INTO pairing_codes (
+        code,
+        description,
+        duration_hours,
         created_at,
         expires_at,
-        updated_at
+        used,
+        organization_id
       ) VALUES (
-        1,
         ${pairingCode},
-        ${JSON.stringify({
-          name: `Dispositivo - ${pairingCode}`,
-          device_name: `Dispositivo - ${pairingCode}`,
-          model: 'Pendente de Configuração',
-          device_model: 'Pendente de Configuração',
-          android_version: 'Detectar Automaticamente',
-          device_id: deviceId,
-          description: description
-        })},
-        'pending',
-        true,
+        ${description},
+        ${duration},
         NOW(),
         ${expiresAt.toISOString()},
-        NOW()
+        FALSE,
+        1
       ) RETURNING *
     `;
 
@@ -109,19 +110,17 @@ export async function POST(request: NextRequest) {
       }, 500);
     }
 
-    const registration = result[0];
-    const deviceInfo = registration.device_info || {};
+    const codeData = result[0];
 
     return createCorsResponse({ 
       success: true,
       data: {
-        pairing_code: registration.pairing_code,
-        device_id: deviceInfo.device_id || deviceId,
-        expires_at: registration.expires_at,
-        created_at: registration.created_at,
+        pairing_code: codeData.code,
+        expires_at: codeData.expires_at,
+        created_at: codeData.created_at,
         duration_hours: duration,
         description,
-        message: `Código ${registration.pairing_code} gerado com validade de ${duration}h`
+        message: `Código ${codeData.code} gerado com validade de ${duration}h`
       }
     }, 201);
 
@@ -164,27 +163,27 @@ export async function GET() {
     // Buscar estatísticas dos códigos
     const stats = await sql`
       SELECT 
-        COUNT(*) as total_active,
-        COUNT(CASE WHEN created_by_admin = true THEN 1 END) as admin_generated,
-        COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
-        COUNT(CASE WHEN expires_at < NOW() THEN 1 END) as expired,
-        AVG(EXTRACT(EPOCH FROM (expires_at - created_at))/3600) as avg_duration_hours
-      FROM device_registrations 
-      WHERE expires_at > NOW() - INTERVAL '24 hours'
+        COUNT(*) as total_codes,
+        COUNT(CASE WHEN used = false AND expires_at > NOW() THEN 1 END) as active_codes,
+        COUNT(CASE WHEN used = true THEN 1 END) as used_codes,
+        COUNT(CASE WHEN expires_at < NOW() THEN 1 END) as expired_codes,
+        AVG(duration_hours) as avg_duration_hours
+      FROM pairing_codes 
+      WHERE created_at > NOW() - INTERVAL '24 hours'
     `;
 
     // Buscar códigos ativos recentes
     const recentCodes = await sql`
       SELECT 
-        pairing_code,
-        device_info,
-        status,
+        code,
+        description,
         created_at,
         expires_at,
-        created_by_admin,
+        used,
+        duration_hours,
         EXTRACT(EPOCH FROM (expires_at - NOW()))/60 as minutes_remaining
-      FROM device_registrations 
-      WHERE expires_at > NOW()
+      FROM pairing_codes 
+      WHERE expires_at > NOW() AND used = FALSE
       ORDER BY created_at DESC
       LIMIT 10
     `;
@@ -196,15 +195,13 @@ export async function GET() {
       data: {
         statistics: stats[0],
         recent_codes: recentCodes.map((code: any) => {
-          const deviceInfo = code.device_info || {};
           return {
-            pairing_code: code.pairing_code,
-            device_name: deviceInfo.name || deviceInfo.device_name || 'Dispositivo',
-            device_id: deviceInfo.device_id || 'N/A',
-            status: code.status,
+            pairing_code: code.code,
+            description: code.description || 'Código gerado pelo administrador',
+            status: code.used ? 'used' : 'available',
             created_at: code.created_at,
             expires_at: code.expires_at,
-            created_by_admin: code.created_by_admin,
+            duration_hours: code.duration_hours,
             minutes_remaining: Math.max(0, Math.floor(Number(code.minutes_remaining)))
           };
         })

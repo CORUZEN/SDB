@@ -10,20 +10,45 @@ export async function POST(request: NextRequest) {
     console.log('📱 Dados recebidos:', body);
     
     // Validar dados obrigatórios
-    const { name, model, android_version, firebase_token, device_identifier } = body;
+    const { name, model, android_version, firebase_token, device_identifier, pairing_code } = body;
     
-    if (!name || !model || !android_version) {
+    if (!name || !model || !android_version || !pairing_code) {
       return NextResponse.json({ 
         success: false,
-        error: 'Dados obrigatórios: name, model, android_version' 
+        error: 'Dados obrigatórios: name, model, android_version, pairing_code' 
       }, { status: 400 });
     }
 
     const sql = postgres(process.env.DATABASE_URL!, { ssl: 'require' });
 
-    // Gerar código único de 6 dígitos para emparelhamento
-    const pairingCode = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log('🔐 Código de emparelhamento gerado:', pairingCode);
+    console.log('🔐 Validando código de emparelhamento:', pairing_code);
+
+    // Verificar se o código existe na tabela pairing_codes e ainda é válido
+    const codeResult = await sql`
+      SELECT code, description, expires_at, used
+      FROM pairing_codes 
+      WHERE code = ${pairing_code}
+      AND expires_at > NOW()
+      AND used = FALSE
+    `;
+
+    if (codeResult.length === 0) {
+      await sql.end();
+      console.log('❌ Código de pareamento inválido ou expirado');
+      return NextResponse.json({ 
+        success: false,
+        error: 'Código de pareamento inválido, expirado ou já utilizado' 
+      }, { status: 400 });
+    }
+
+    // Marcar código como usado
+    await sql`
+      UPDATE pairing_codes 
+      SET used = TRUE 
+      WHERE code = ${pairing_code}
+    `;
+
+    console.log('✅ Código válido e marcado como usado');
 
     // Gerar ID único no formato correto (como dispositivos existentes)
     const deviceId = device_identifier || `android_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -62,7 +87,7 @@ export async function POST(request: NextRequest) {
         ${android_version},
         'Usuário Android',
         ${JSON.stringify({
-          pairing_code: pairingCode,
+          pairing_code: pairing_code,
           registration_source: 'android_app',
           requires_approval: true,
           registration_timestamp: new Date().toISOString()
@@ -89,9 +114,9 @@ export async function POST(request: NextRequest) {
       success: true,
       data: {
         device_id: device.id,
-        pairing_code: deviceMetadata.pairing_code,
+        pairing_code: pairing_code,
         status: 'pending',
-        message: 'Dispositivo registrado com sucesso! Use o código no sistema web para aprovar.',
+        message: 'Dispositivo registrado com sucesso! Aguarde aprovação do administrador.',
         created_at: device.created_at
       }
     }, { status: 201 });
