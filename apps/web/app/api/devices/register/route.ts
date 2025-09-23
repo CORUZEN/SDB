@@ -67,21 +67,26 @@ export async function POST(request: NextRequest) {
         organization_id,
         name,
         device_identifier,
+        device_type,
         manufacturer,
         model,
+        os_type,
         os_version,
         fcm_token,
         status,
         owner_name,
         tags,
         metadata,
+        first_enrolled_at,
         created_at
       ) VALUES (
         ${organizationId},
         ${name},
         ${device_identifier || `android_${Date.now()}`},
+        'smartphone',
         'Android',
         ${model},
+        'android',
         ${android_version},
         ${firebase_token || null},
         'inactive',
@@ -93,6 +98,7 @@ export async function POST(request: NextRequest) {
           requires_approval: true,
           registration_timestamp: new Date().toISOString()
         })},
+        NOW(),
         NOW()
       ) RETURNING id, name, status, metadata
     `;
