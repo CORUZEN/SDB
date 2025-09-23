@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.sdb.mdm.SDBApplication
 import com.sdb.mdm.ui.pairing.PairingScreen
 import com.sdb.mdm.ui.dashboard.DashboardScreen
 import com.sdb.mdm.ui.theme.SDBTheme
@@ -40,12 +41,16 @@ class MainActivity : ComponentActivity() {
 fun SDBApp() {
     val navController = rememberNavController()
     
+    // Verificar se já está emparelhado
+    val deviceId = SDBApplication.instance.getStoredDeviceId()
+    val startDestination = if (deviceId?.isNotEmpty() == true) "dashboard" else "pairing"
+    
     Scaffold(
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "pairing",
+            startDestination = startDestination,
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("pairing") {
