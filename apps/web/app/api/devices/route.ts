@@ -9,6 +9,15 @@ import postgres from 'postgres';
 import { DeviceSchema, DeviceListFilterSchema } from '@sdb/shared/schemas';
 import { z } from 'zod';
 import { resolveOrganizationContext, requirePermission } from '@/lib/organization-middleware';
+import { createCorsResponse, handlePreflight } from '@/lib/cors';
+
+// ================================
+// OPTIONS handler for CORS
+// ================================
+
+export async function OPTIONS() {
+  return handlePreflight();
+}
 
 // ================================
 // Validation Schemas
@@ -157,7 +166,7 @@ export async function GET(request: NextRequest) {
       updated_at: device.updated_at?.toISOString() || null,
     }));
 
-    return NextResponse.json({
+    return createCorsResponse({
       success: true,
       data: formattedDevices,
       pagination: {

@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
 
     // Gerar código único de 6 dígitos
-    let pairingCode: string = '';
+    let pairingCode: string;
     let isUnique = false;
     let attempts = 0;
     
@@ -82,10 +82,10 @@ export async function POST(request: NextRequest) {
         updated_at
       ) VALUES (
         1,
-        ${pairingCode},
+        ${pairingCode!},
         ${JSON.stringify({
-          name: `Dispositivo - ${pairingCode}`,
-          device_name: `Dispositivo - ${pairingCode}`,
+          name: `Dispositivo - ${pairingCode!}`,
+          device_name: `Dispositivo - ${pairingCode!}`,
           model: 'Pendente de Configuração',
           device_model: 'Pendente de Configuração',
           android_version: 'Detectar Automaticamente',
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET /api/admin/generate-code - Estatísticas de códigos ativos
-export async function GET() {
+export async function GET(request: NextRequest) {
   let sql: any;
   
   try {

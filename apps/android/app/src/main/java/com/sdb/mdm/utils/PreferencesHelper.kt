@@ -23,6 +23,8 @@ class PreferencesHelper(context: Context) {
         
         // Default values
         private const val DEFAULT_API_URL = "https://friaxis.coruzen.com/"
+        private const val DEVELOPMENT_API_URL = "http://10.0.2.2:3001/" // Android emulator localhost
+        private const val LOCAL_API_URL = "http://192.168.1.100:3001/" // Replace with your local IP
     }
     
     private val sharedPreferences: SharedPreferences = 
@@ -34,6 +36,32 @@ class PreferencesHelper(context: Context) {
     
     fun setApiBaseUrl(url: String) {
         sharedPreferences.edit().putString(KEY_API_BASE_URL, url).apply()
+    }
+    
+    // Development helpers
+    fun setDevelopmentMode(useDevelopment: Boolean) {
+        val url = if (useDevelopment) DEVELOPMENT_API_URL else DEFAULT_API_URL
+        setApiBaseUrl(url)
+    }
+    
+    fun setLocalMode(useLocal: Boolean, localIp: String? = null) {
+        val url = if (useLocal) {
+            localIp?.let { "http://$it:3001/" } ?: LOCAL_API_URL
+        } else {
+            DEFAULT_API_URL
+        }
+        setApiBaseUrl(url)
+    }
+    
+    fun getCurrentMode(): String {
+        val currentUrl = getApiBaseUrl()
+        return when {
+            currentUrl.contains("10.0.2.2") -> "DEVELOPMENT_EMULATOR"
+            currentUrl.contains("192.168") -> "LOCAL_NETWORK"
+            currentUrl.contains("localhost") -> "LOCAL_HOST"
+            currentUrl.contains("friaxis.coruzen.com") -> "PRODUCTION"
+            else -> "CUSTOM"
+        }
     }
     
     fun getStoredDeviceId(): String? {

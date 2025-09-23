@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createCorsResponse, handlePreflight } from "@/lib/cors";
+
+export async function OPTIONS() {
+  return handlePreflight();
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,14 +12,14 @@ export async function GET(request: NextRequest) {
     const hasFirebaseProjectId = !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
     
     if (!databaseUrl) {
-      return NextResponse.json({
+      return createCorsResponse({
         success: false,
         error: 'DATABASE_URL não configurado',
         data: {
           databaseUrl: 'Não configurado',
           hasFirebaseProjectId
         }
-      }, { status: 500 });
+      }, 500);
     }
 
     // Importar postgres dinamicamente para evitar problemas de webpack
@@ -50,7 +55,7 @@ export async function GET(request: NextRequest) {
 
     await sql.end();
 
-    return NextResponse.json({
+    return createCorsResponse({
       success: true,
       data: {
         tableExists: tableExists[0].exists,
@@ -64,11 +69,11 @@ export async function GET(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Erro ao verificar banco:', error);
-    return NextResponse.json({
+    return createCorsResponse({
       success: false,
       error: error.message,
       details: error.name || 'Database connection error',
       timestamp: new Date().toISOString()
-    }, { status: 500 });
+    }, 500);
   }
 }

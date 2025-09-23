@@ -78,11 +78,14 @@ export async function POST(
         location_accuracy = ${location_accuracy || null},
         location_timestamp = ${location_lat && location_lng ? sql`NOW()` : sql`location_timestamp`},
         network_info = ${network_info ? JSON.stringify(network_info) : sql`network_info`},
+        app_version = ${app_version || null},
+        os_version = ${os_version || null},
         updated_at = NOW()
-      WHERE id = ${deviceId}
+      WHERE device_identifier = ${deviceId} OR id = ${deviceId}
       RETURNING 
         id, 
         name, 
+        device_identifier,
         last_heartbeat,
         last_seen_at,
         status,
@@ -110,16 +113,12 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: 'Heartbeat recorded',
+      message: 'Heartbeat processed successfully',
       device: {
-        id: device.id,
+        id: device.device_identifier || device.id,
         name: device.name,
-        last_heartbeat: device.last_heartbeat,
-        last_seen_at: device.last_seen_at,
-        status: device.status,
-        battery_level: device.battery_level,
-        location_lat: device.location_lat,
-        location_lng: device.location_lng,
+        last_heartbeat: device.last_heartbeat?.toISOString(),
+        status: device.status
       },
       timestamp: new Date().toISOString(),
     });
