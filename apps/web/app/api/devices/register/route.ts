@@ -20,24 +20,46 @@ export async function POST(request: NextRequest) {
 
     // Gerar código único de 6 dígitos para emparelhamento
     const pairingCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Verificar se existe pelo menos uma organização, se não, criar uma padrão
+    let organizationId;
     
-    // Usar organização padrão (primeira organização) para dispositivos não autenticados
-    // Em produção, isso seria determinado pelo domínio ou contexto de autenticação
-    const defaultOrgResult = await sql`
+    const orgResult = await sql`
       SELECT id FROM organizations 
       ORDER BY created_at ASC 
       LIMIT 1
     `;
 
-    if (defaultOrgResult.length === 0) {
-      await sql.end();
-      return NextResponse.json({ 
-        success: false,
-        error: 'Nenhuma organização configurada no sistema' 
-      }, { status: 500 });
+    if (orgResult.length === 0) {
+      // Criar organização padrão
+      const newOrgResult = await sql`
+        INSERT INTO organizations (
+          name,
+          slug,
+          domain,
+          is_active,
+          created_at
+        ) VALUES (
+          'Default Organization',
+          'default',
+          'default.local',
+          true,
+          NOW()
+        ) RETURNING id
+      `;
+      
+      if (newOrgResult.length === 0) {
+        await sql.end();
+        return NextResponse.json({ 
+          success: false,
+          error: 'Erro ao criar organização padrão' 
+        }, { status: 500 });
+      }
+      
+      organizationId = newOrgResult[0].id;
+    } else {
+      organizationId = orgResult[0].id;
     }
-
-    const organizationId = defaultOrgResult[0].id;
 
     // Inserir dispositivo com status 'inactive' (pendente de aprovação)
     const result = await sql`
