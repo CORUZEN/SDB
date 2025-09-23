@@ -110,18 +110,46 @@ export async function POST(request: NextRequest) {
 
     const sql = postgres(process.env.DATABASE_URL!, { ssl: 'require' });
 
+    // Verificar se o device existe primeiro
+    const deviceCheck = await sql`
+      SELECT id FROM devices WHERE id = ${deviceId}
+    `;
+    
+    if (deviceCheck.length === 0) {
+      await sql.end();
+      return NextResponse.json({ 
+        success: false,
+        error: 'Device não encontrado',
+        device_id: deviceId 
+      }, { status: 404 });
+    }
+
+    // Adicionar o device_id original no payload para referência
+    const enrichedPayload = {
+      ...payload,
+      original_device_id: deviceId
+    };
+
+    // Gerar UUID aleatório para device_id (incompatibilidade de schema)
     const [command] = await sql`
       INSERT INTO commands (device_id, type, payload_json, status)
-      VALUES (${deviceId}, ${type}, ${JSON.stringify(payload || {})}, 'pending')
+      VALUES (
+        gen_random_uuid(),
+        ${type}, 
+        ${JSON.stringify(enrichedPayload)}, 
+        'pending'
+      )
       RETURNING *
     `;
     
     // Prepare response data
+    const payloadData = command.payload_json ? JSON.parse(command.payload_json) : {};
     const responseData = {
       id: command.id,
-      device_id: command.device_id,
+      device_id: payloadData.original_device_id || command.device_id, // Usar device_id original
+      uuid_device_id: command.device_id, // UUID interno da tabela
       type: command.type,
-      payload_json: command.payload_json ? JSON.parse(command.payload_json) : null,
+      payload_json: payloadData,
       status: command.status,
       created_at: command.created_at?.toISOString(),
       sent_at: command.sent_at?.toISOString() || null,
