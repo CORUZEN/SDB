@@ -4,7 +4,7 @@ import postgres from 'postgres';
 // Endpoint de teste simplificado para debug
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔍 Iniciando teste de registro...');
+    console.log('🔍 Iniciando teste completo de registro...');
     
     const sql = postgres(process.env.DATABASE_URL!, { ssl: 'require' });
     
@@ -13,41 +13,73 @@ export async function POST(request: NextRequest) {
     const testResult = await sql`SELECT NOW() as current_time`;
     console.log('✅ Conexão OK:', testResult[0]);
     
-    // Verificar se tabela devices existe
-    console.log('🔍 Verificando tabela devices...');
-    const tableCheck = await sql`
-      SELECT table_name 
-      FROM information_schema.tables 
-      WHERE table_name = 'devices'
-    `;
-    console.log('📋 Tabela devices existe:', tableCheck.length > 0);
-    
     // Verificar organizações
     console.log('🔍 Verificando organizações...');
-    const orgCheck = await sql`SELECT id, name FROM organizations LIMIT 5`;
-    console.log('🏢 Organizações encontradas:', orgCheck.length);
+    const orgCheck = await sql`SELECT id, name FROM organizations ORDER BY id LIMIT 5`;
+    console.log('🏢 Organizações encontradas:', orgCheck);
     
     if (orgCheck.length === 0) {
-      console.log('⚠️ Nenhuma organização encontrada, criando padrão...');
-      const newOrg = await sql`
-        INSERT INTO organizations (name, slug, domain, is_active) 
-        VALUES ('Test Org', 'test', 'test.local', true) 
-        RETURNING id, name
-      `;
-      console.log('✅ Organização criada:', newOrg[0]);
+      await sql.end();
+      return NextResponse.json({
+        success: false,
+        error: 'Nenhuma organização encontrada'
+      }, { status: 400 });
     }
-    
-    await sql.end();
-    
-    return NextResponse.json({
-      success: true,
-      message: 'Teste concluído com sucesso',
-      data: {
-        database_connected: true,
-        devices_table_exists: tableCheck.length > 0,
-        organizations_count: orgCheck.length
-      }
-    });
+
+    // TESTE CRÍTICO: Tentar inserção simples na tabela devices
+    console.log('🔍 Testando inserção simples...');
+    try {
+      const insertResult = await sql`
+        INSERT INTO devices (organization_id, name) 
+        VALUES (${orgCheck[0].id}, 'Test Simple Insert') 
+        RETURNING id, name, created_at
+      `;
+      console.log('✅ Inserção simples funcionou:', insertResult[0]);
+      
+      // Agora testar inserção com mais campos
+      const insertResult2 = await sql`
+        INSERT INTO devices (
+          organization_id, 
+          name, 
+          device_identifier,
+          device_type,
+          os_type,
+          status
+        ) VALUES (
+          ${orgCheck[0].id}, 
+          'Test Complete Insert',
+          'test_device_123',
+          'smartphone',
+          'android',
+          'inactive'
+        ) RETURNING id, name, device_identifier, status
+      `;
+      console.log('✅ Inserção completa funcionou:', insertResult2[0]);
+      
+      await sql.end();
+      
+      return NextResponse.json({
+        success: true,
+        message: 'Testes de inserção passaram com sucesso!',
+        data: {
+          connection_test: testResult[0],
+          organizations_found: orgCheck.length,
+          simple_insert: insertResult[0],
+          complete_insert: insertResult2[0]
+        }
+      });
+      
+    } catch (insertError: any) {
+      console.error('❌ ERRO NA INSERÇÃO:', insertError);
+      await sql.end();
+      
+      return NextResponse.json({
+        success: false,
+        error: 'Erro na inserção da tabela devices',
+        details: insertError.message,
+        code: insertError.code
+      }, { status: 500 });
+    }
     
   } catch (error: any) {
     console.error('❌ Erro no teste:', error);

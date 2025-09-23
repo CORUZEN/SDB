@@ -3,10 +3,10 @@ import postgres from 'postgres';
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🔍 Pairing validation working endpoint');
+    
     const { pairing_code } = await request.json();
     
-    console.log('🔍 Validando pairing code:', pairing_code);
-
     if (!pairing_code) {
       return NextResponse.json(
         { success: false, error: 'Código de pareamento é obrigatório' },
@@ -14,9 +14,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log('🔐 Validating pairing code:', pairing_code);
+
     const sql = postgres(process.env.DATABASE_URL!, { ssl: 'require' });
 
-    // Buscar dispositivo pelo pairing_code no metadata (removido filtro status)
     const result = await sql`
       SELECT id, name, device_identifier, status, organization_id, metadata, created_at
       FROM devices 
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
     await sql.end();
 
     if (result.length === 0) {
-      console.log('❌ Pairing code não encontrado ou já aprovado');
+      console.log('❌ Pairing code not found or expired');
       return NextResponse.json(
         { success: false, error: 'Código de pareamento inválido ou expirado' },
         { status: 404 }
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     const device = result[0];
-    console.log('✅ Dispositivo encontrado:', device);
+    console.log('✅ Device found for pairing code:', device.id);
 
     return NextResponse.json({
       success: true,
@@ -45,14 +46,14 @@ export async function POST(request: NextRequest) {
         device_identifier: device.device_identifier,
         status: device.status,
         organization_id: device.organization_id,
-        created_at: device.created_at,
         pairing_code: pairing_code,
+        created_at: device.created_at,
         message: 'Código válido! Dispositivo encontrado e pronto para aprovação.'
       }
     });
 
   } catch (error: any) {
-    console.error('❌ Erro na validação do pairing code:', error);
+    console.error('❌ Error validating pairing code:', error);
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor', details: error.message },
       { status: 500 }

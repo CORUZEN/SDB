@@ -4,7 +4,7 @@ import postgres from 'postgres';
 // POST /api/devices/register - Registro inicial de dispositivo Android
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔍 Iniciando registro de dispositivo...');
+    console.log('🔍 Iniciando registro de dispositivo Android...');
     
     const body = await request.json();
     console.log('📱 Dados recebidos:', body);
@@ -25,14 +25,19 @@ export async function POST(request: NextRequest) {
     const pairingCode = Math.floor(100000 + Math.random() * 900000).toString();
     console.log('🔐 Código de emparelhamento gerado:', pairingCode);
 
-    // Usar primeira organização disponível (ID = 1 que sabemos que existe)
+    // Gerar ID único no formato correto (como dispositivos existentes)
+    const deviceId = device_identifier || `android_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    console.log('🆔 Device ID gerado:', deviceId);
+
+    // Usar organização padrão (ID = 1)
     const organizationId = 1;
 
-    // Inserir dispositivo com campos mínimos e compatíveis
+    // Inserir dispositivo com estrutura que sabemos que funciona
     console.log('💾 Inserindo dispositivo no banco...');
     
     const result = await sql`
       INSERT INTO devices (
+        id,
         organization_id,
         name,
         device_identifier,
@@ -45,9 +50,10 @@ export async function POST(request: NextRequest) {
         owner_name,
         metadata
       ) VALUES (
+        ${deviceId},
         ${organizationId},
         ${name},
-        ${device_identifier || `android_${Date.now()}`},
+        ${deviceId},
         ${firebase_token || null},
         'inactive',
         'smartphone',
@@ -85,7 +91,7 @@ export async function POST(request: NextRequest) {
         device_id: device.id,
         pairing_code: deviceMetadata.pairing_code,
         status: 'pending',
-        message: 'Dispositivo registrado. Use o código no sistema web para aprovar.',
+        message: 'Dispositivo registrado com sucesso! Use o código no sistema web para aprovar.',
         created_at: device.created_at
       }
     }, { status: 201 });
