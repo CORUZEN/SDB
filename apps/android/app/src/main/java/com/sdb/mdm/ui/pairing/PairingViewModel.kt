@@ -1,12 +1,15 @@
 package com.sdb.mdm.ui.pairing
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.sdb.mdm.SDBApplication
 import com.sdb.mdm.data.repository.DeviceRegistrationRepository
+import com.sdb.mdm.service.HeartbeatService
 import com.sdb.mdm.utils.DeviceInfoCollector
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -59,6 +62,13 @@ class PairingViewModel @Inject constructor(
                 
                 result.fold(
                     onSuccess = { device ->
+                        // Salvar device ID após pareamento bem-sucedido
+                        SDBApplication.instance.setStoredDeviceId(device.id)
+                        Log.d("PairingViewModel", "Device ID salvo: ${device.id}")
+                        
+                        // Iniciar HeartbeatService imediatamente
+                        HeartbeatService.start(SDBApplication.instance.applicationContext)
+                        
                         _uiState.value = currentState.copy(
                             isLoading = false,
                             isPaired = true,
