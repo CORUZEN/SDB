@@ -18,24 +18,17 @@ export async function GET(request: NextRequest) {
       ORDER BY ordinal_position
     `;
     
-    // Tentar inserção super simples primeiro
-    try {
-      const testResult = await sql`
-        INSERT INTO devices (organization_id, name) 
-        VALUES (1, 'Test Simple Device') 
-        RETURNING id, name
-      `;
-      console.log('✅ Inserção simples OK:', testResult[0]);
-    } catch (insertError: any) {
-      console.error('❌ Erro na inserção simples:', insertError.message);
-    }
+    // Verificar se tabela devices tem dados
+    const deviceCount = await sql`SELECT COUNT(*) as count FROM devices`;
+    console.log('📱 Total de devices na tabela:', deviceCount[0].count);
     
     await sql.end();
     
     return NextResponse.json({
       success: true,
       columns: columns,
-      test_insert: 'Check logs for results'
+      device_count: deviceCount[0].count,
+      message: 'Column structure verified successfully'
     });
     
   } catch (error: any) {
