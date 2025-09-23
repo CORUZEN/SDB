@@ -34,6 +34,23 @@ export async function POST(request: NextRequest) {
     const { default: postgres } = await import('postgres');
     sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
 
+    // Criar tabela de códigos temporários se não existir (primeiro!)
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS pairing_codes (
+          code VARCHAR(6) PRIMARY KEY,
+          description TEXT,
+          duration_hours NUMERIC DEFAULT 1,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          expires_at TIMESTAMP NOT NULL,
+          used BOOLEAN DEFAULT FALSE,
+          organization_id INTEGER DEFAULT 1
+        )
+      `;
+    } catch (createError) {
+      console.log('Tabela pairing_codes já existe ou foi criada');
+    }
+
     // Gerar código único de 6 dígitos
     let pairingCode: string = '';
     let isUnique = false;
@@ -43,16 +60,21 @@ export async function POST(request: NextRequest) {
     while (!isUnique && attempts < 10) {
       pairingCode = Math.floor(100000 + Math.random() * 900000).toString();
       
-      const existing = await sql`
-        SELECT code FROM pairing_codes 
-        WHERE code = ${pairingCode} 
-        AND expires_at > NOW()
-        AND used = FALSE
-      `;
-      
-      if (existing.length === 0) {
-        isUnique = true;
+      try {
+        const existing = await sql`
+          SELECT code FROM pairing_codes 
+          WHERE code = ${pairingCode} 
+          AND expires_at > CURRENT_TIMESTAMP
+          AND used = FALSE
+        `;
+        
+        if (existing.length === 0) {
+          isUnique = true;
+        }
+      } catch (checkError) {
+        console.log('Erro ao verificar código existente:', checkError);
       }
+      
       attempts++;
     }
     
@@ -63,19 +85,6 @@ export async function POST(request: NextRequest) {
         error: 'Não foi possível gerar código único. Tente novamente.' 
       }, 500);
     }
-    
-    // Criar tabela de códigos temporários se não existir
-    await sql`
-      CREATE TABLE IF NOT EXISTS pairing_codes (
-        code VARCHAR(6) PRIMARY KEY,
-        description TEXT,
-        duration_hours FLOAT DEFAULT 1,
-        created_at TIMESTAMP DEFAULT NOW(),
-        expires_at TIMESTAMP NOT NULL,
-        used BOOLEAN DEFAULT FALSE,
-        organization_id INTEGER DEFAULT 1
-      )
-    `;
 
     // Inserir apenas o código na tabela temporária
     const expiresAt = new Date();
@@ -94,9 +103,9 @@ export async function POST(request: NextRequest) {
         ${pairingCode},
         ${description},
         ${duration},
-        NOW(),
+        CURRENT_TIMESTAMP,
         ${expiresAt.toISOString()},
-        FALSE,
+        false,
         1
       ) RETURNING *
     `;
@@ -160,16 +169,31 @@ export async function GET() {
     const { default: postgres } = await import('postgres');
     sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
 
+    // Verificar se tabela existe primeiro
+    try {
+      await sql`SELECT 1 FROM pairing_codes LIMIT 1`;
+    } catch (e) {
+      // Tabela não existe, retornar dados vazios
+      await sql.end();
+      return createCorsResponse({ 
+        success: true,
+        data: {
+          statistics: { total_codes: 0, active_codes: 0, used_codes: 0, expired_codes: 0, avg_duration_hours: 0 },
+          recent_codes: []
+        }
+      });
+    }
+
     // Buscar estatísticas dos códigos
     const stats = await sql`
       SELECT 
         COUNT(*) as total_codes,
-        COUNT(CASE WHEN used = false AND expires_at > NOW() THEN 1 END) as active_codes,
+        COUNT(CASE WHEN used = false AND expires_at > CURRENT_TIMESTAMP THEN 1 END) as active_codes,
         COUNT(CASE WHEN used = true THEN 1 END) as used_codes,
-        COUNT(CASE WHEN expires_at < NOW() THEN 1 END) as expired_codes,
+        COUNT(CASE WHEN expires_at < CURRENT_TIMESTAMP THEN 1 END) as expired_codes,
         AVG(duration_hours) as avg_duration_hours
       FROM pairing_codes 
-      WHERE created_at > NOW() - INTERVAL '24 hours'
+      WHERE created_at > CURRENT_TIMESTAMP - INTERVAL '24 hours'
     `;
 
     // Buscar códigos ativos recentes
@@ -181,9 +205,9 @@ export async function GET() {
         expires_at,
         used,
         duration_hours,
-        EXTRACT(EPOCH FROM (expires_at - NOW()))/60 as minutes_remaining
+        EXTRACT(EPOCH FROM (expires_at - CURRENT_TIMESTAMP))/60 as minutes_remaining
       FROM pairing_codes 
-      WHERE expires_at > NOW() AND used = FALSE
+      WHERE expires_at > CURRENT_TIMESTAMP AND used = false
       ORDER BY created_at DESC
       LIMIT 10
     `;
