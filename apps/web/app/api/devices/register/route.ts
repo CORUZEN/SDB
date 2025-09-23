@@ -21,85 +21,52 @@ export async function POST(request: NextRequest) {
     // Gerar código único de 6 dígitos para emparelhamento
     const pairingCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Verificar se existe pelo menos uma organização, se não, criar uma padrão
-    let organizationId;
+    // Usar primeira organização disponível (para desenvolvimento)
+    const orgResult = await sql`SELECT id FROM organizations ORDER BY id LIMIT 1`;
     
-    const orgResult = await sql`
-      SELECT id FROM organizations 
-      ORDER BY created_at ASC 
-      LIMIT 1
-    `;
-
     if (orgResult.length === 0) {
-      // Criar organização padrão
-      const newOrgResult = await sql`
-        INSERT INTO organizations (
-          name,
-          slug,
-          domain,
-          is_active,
-          created_at
-        ) VALUES (
-          'Default Organization',
-          'default',
-          'default.local',
-          true,
-          NOW()
-        ) RETURNING id
-      `;
-      
-      if (newOrgResult.length === 0) {
-        await sql.end();
-        return NextResponse.json({ 
-          success: false,
-          error: 'Erro ao criar organização padrão' 
-        }, { status: 500 });
-      }
-      
-      organizationId = newOrgResult[0].id;
-    } else {
-      organizationId = orgResult[0].id;
+      await sql.end();
+      return NextResponse.json({ 
+        success: false,
+        error: 'Nenhuma organização encontrada' 
+      }, { status: 500 });
     }
 
-    // Inserir dispositivo com status 'inactive' (pendente de aprovação)
+    const organizationId = orgResult[0].id;
+
+    // Inserir dispositivo de forma simples e compatível
+    const metadata = {
+      pairing_code: pairingCode,
+      registration_source: 'android_app',
+      requires_approval: true,
+      registration_timestamp: new Date().toISOString()
+    };
+
     const result = await sql`
       INSERT INTO devices (
         organization_id,
         name,
         device_identifier,
-        device_type,
-        manufacturer,
-        model,
-        os_type,
-        os_version,
         fcm_token,
         status,
+        device_type,
+        os_type,
+        model,
+        os_version,
         owner_name,
-        tags,
-        metadata,
-        first_enrolled_at,
-        created_at
+        metadata
       ) VALUES (
         ${organizationId},
         ${name},
         ${device_identifier || `android_${Date.now()}`},
-        'smartphone',
-        'Android',
-        ${model},
-        'android',
-        ${android_version},
-        ${firebase_token || null},
+        ${firebase_token},
         'inactive',
+        'smartphone',
+        'android',
+        ${model},
+        ${android_version},
         'Usuário Android',
-        ${JSON.stringify(['pending_approval', 'android_device'])},
-        ${JSON.stringify({
-          pairing_code: pairingCode,
-          registration_source: 'android_app',
-          requires_approval: true,
-          registration_timestamp: new Date().toISOString()
-        })},
-        NOW(),
-        NOW()
+        ${JSON.stringify(metadata)}
       ) RETURNING id, name, status, metadata
     `;
 
