@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
           requires_approval: true,
           registration_timestamp: new Date().toISOString()
         })}
-      ) RETURNING id, name, status, metadata, created_at
+      ) RETURNING *
     `;
 
     await sql.end();
