@@ -4,7 +4,10 @@ import postgres from 'postgres';
 // POST /api/devices/register - Registro inicial de dispositivo Android
 export async function POST(request: NextRequest) {
   try {
+    console.log('🔍 Iniciando registro de dispositivo...');
+    
     const body = await request.json();
+    console.log('📱 Dados recebidos:', body);
     
     // Validar dados obrigatórios
     const { name, model, android_version, firebase_token, device_identifier } = body;
@@ -20,28 +23,14 @@ export async function POST(request: NextRequest) {
 
     // Gerar código único de 6 dígitos para emparelhamento
     const pairingCode = Math.floor(100000 + Math.random() * 900000).toString();
+    console.log('🔐 Código de emparelhamento gerado:', pairingCode);
 
-    // Usar primeira organização disponível (para desenvolvimento)
-    const orgResult = await sql`SELECT id FROM organizations ORDER BY id LIMIT 1`;
+    // Usar primeira organização disponível (ID = 1 que sabemos que existe)
+    const organizationId = 1;
+
+    // Inserir dispositivo com campos mínimos e compatíveis
+    console.log('💾 Inserindo dispositivo no banco...');
     
-    if (orgResult.length === 0) {
-      await sql.end();
-      return NextResponse.json({ 
-        success: false,
-        error: 'Nenhuma organização encontrada' 
-      }, { status: 500 });
-    }
-
-    const organizationId = orgResult[0].id;
-
-    // Inserir dispositivo de forma simples e compatível
-    const metadata = {
-      pairing_code: pairingCode,
-      registration_source: 'android_app',
-      requires_approval: true,
-      registration_timestamp: new Date().toISOString()
-    };
-
     const result = await sql`
       INSERT INTO devices (
         organization_id,
@@ -59,20 +48,26 @@ export async function POST(request: NextRequest) {
         ${organizationId},
         ${name},
         ${device_identifier || `android_${Date.now()}`},
-        ${firebase_token},
+        ${firebase_token || null},
         'inactive',
         'smartphone',
         'android',
         ${model},
         ${android_version},
         'Usuário Android',
-        ${JSON.stringify(metadata)}
-      ) RETURNING id, name, status, metadata
+        ${JSON.stringify({
+          pairing_code: pairingCode,
+          registration_source: 'android_app',
+          requires_approval: true,
+          registration_timestamp: new Date().toISOString()
+        })}
+      ) RETURNING id, name, status, metadata, created_at
     `;
 
     await sql.end();
 
     if (result.length === 0) {
+      console.error('❌ Falha ao inserir dispositivo');
       return NextResponse.json({ 
         success: false,
         error: 'Erro ao criar registro de dispositivo' 
@@ -81,6 +76,8 @@ export async function POST(request: NextRequest) {
 
     const device = result[0];
     const deviceMetadata = device.metadata as any;
+    
+    console.log('✅ Dispositivo registrado com sucesso:', device.id);
 
     return NextResponse.json({ 
       success: true,
@@ -88,16 +85,20 @@ export async function POST(request: NextRequest) {
         device_id: device.id,
         pairing_code: deviceMetadata.pairing_code,
         status: 'pending',
-        message: 'Dispositivo registrado. Use o código no sistema web para aprovar.'
+        message: 'Dispositivo registrado. Use o código no sistema web para aprovar.',
+        created_at: device.created_at
       }
     }, { status: 201 });
 
   } catch (error: any) {
-    console.error('Erro ao registrar dispositivo:', error);
+    console.error('❌ Erro ao registrar dispositivo:', error);
+    console.error('Stack:', error.stack);
+    
     return NextResponse.json({ 
       success: false,
       error: 'Erro interno do servidor',
-      details: error.message 
+      details: error.message,
+      code: error.code
     }, { status: 500 });
   }
 }

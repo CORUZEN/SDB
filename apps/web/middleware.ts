@@ -38,6 +38,7 @@ const PUBLIC_ROUTES = [
   '/api/health',
   '/api/test-vercel',
   '/api/devices/register',
+  '/api/devices/validate-pairing',
   '/api/debug',
 ];
 
