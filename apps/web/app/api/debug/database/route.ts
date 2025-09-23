@@ -1,9 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import postgres from 'postgres';
 
 export async function GET(request: NextRequest) {
   try {
-    const sql = postgres(process.env.DATABASE_URL!, { ssl: 'require' });
+    // Verificar variáveis de ambiente
+    const databaseUrl = process.env.DATABASE_URL;
+    const hasFirebaseProjectId = !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    
+    if (!databaseUrl) {
+      return NextResponse.json({
+        success: false,
+        error: 'DATABASE_URL não configurado',
+        data: {
+          databaseUrl: 'Não configurado',
+          hasFirebaseProjectId
+        }
+      }, { status: 500 });
+    }
+
+    // Importar postgres dinamicamente para evitar problemas de webpack
+    const { default: postgres } = await import('postgres');
+    const sql = postgres(databaseUrl, { ssl: 'require' });
 
     // Verificar se a tabela device_registrations existe
     const tableExists = await sql`
@@ -18,7 +34,7 @@ export async function GET(request: NextRequest) {
     let tableStructure = null;
     if (tableExists[0].exists) {
       tableStructure = await sql`
-        SELECT column_name, data_type, is_nullable
+        SELECT column_name, data_type, is_nullable, column_default
         FROM information_schema.columns
         WHERE table_name = 'device_registrations'
         ORDER BY ordinal_position;
@@ -40,7 +56,9 @@ export async function GET(request: NextRequest) {
         tableExists: tableExists[0].exists,
         tableStructure,
         recordCount,
-        databaseUrl: process.env.DATABASE_URL ? 'Configurado' : 'Não configurado'
+        databaseUrl: 'Configurado',
+        hasFirebaseProjectId,
+        timestamp: new Date().toISOString()
       }
     });
 
@@ -49,7 +67,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: false,
       error: error.message,
-      stack: error.stack
+      details: error.name || 'Database connection error',
+      timestamp: new Date().toISOString()
     }, { status: 500 });
   }
 }

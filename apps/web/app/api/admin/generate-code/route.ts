@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import postgres from 'postgres';
 
 // POST /api/admin/generate-code - Gerar código de pareamento manual
 export async function POST(request: NextRequest) {
+  let sql: any;
+  
   try {
+    // Verificar se DATABASE_URL está configurado
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ 
+        success: false,
+        error: 'Database not configured' 
+      }, { status: 500 });
+    }
+
     const body = await request.json();
     
     // Validar dados opcionais para contexto
@@ -16,7 +25,9 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const sql = postgres(process.env.DATABASE_URL!, { ssl: 'require' });
+    // Dynamic import to avoid webpack issues
+    const { default: postgres } = await import('postgres');
+    sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
 
     // Gerar código único de 6 dígitos
     let pairingCode: string;
@@ -111,6 +122,15 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Erro ao gerar código:', error);
+    
+    if (sql) {
+      try {
+        await sql.end();
+      } catch (endError) {
+        console.error('Error closing database connection:', endError);
+      }
+    }
+    
     return NextResponse.json({ 
       success: false,
       error: 'Erro interno do servidor',
@@ -121,8 +141,20 @@ export async function POST(request: NextRequest) {
 
 // GET /api/admin/generate-code - Estatísticas de códigos ativos
 export async function GET(request: NextRequest) {
+  let sql: any;
+  
   try {
-    const sql = postgres(process.env.DATABASE_URL!, { ssl: 'require' });
+    // Verificar se DATABASE_URL está configurado
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ 
+        success: false,
+        error: 'Database not configured' 
+      }, { status: 500 });
+    }
+
+    // Dynamic import to avoid webpack issues
+    const { default: postgres } = await import('postgres');
+    sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
 
     // Buscar estatísticas dos códigos
     const stats = await sql`
@@ -158,7 +190,7 @@ export async function GET(request: NextRequest) {
       success: true,
       data: {
         statistics: stats[0],
-        recent_codes: recentCodes.map(code => {
+        recent_codes: recentCodes.map((code: any) => {
           const deviceInfo = code.device_info || {};
           return {
             pairing_code: code.pairing_code,
@@ -176,6 +208,15 @@ export async function GET(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Erro ao buscar estatísticas:', error);
+    
+    if (sql) {
+      try {
+        await sql.end();
+      } catch (endError) {
+        console.error('Error closing database connection:', endError);
+      }
+    }
+    
     return NextResponse.json({ 
       success: false,
       error: 'Erro interno do servidor' 

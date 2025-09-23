@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import postgres from 'postgres';
 
 // POST /api/devices/heartbeat - Device heartbeat
 export async function POST(request: NextRequest) {
+  let sql: any;
+  
   try {
     const { device_id, battery_level, battery_status, location_lat, location_lng, network_info } = await request.json();
     
@@ -15,7 +16,17 @@ export async function POST(request: NextRequest) {
 
     console.log(`💓 Heartbeat recebido do dispositivo: ${device_id}`);
 
-    const sql = postgres(process.env.DATABASE_URL!, { ssl: 'require' });
+    // Verificar se DATABASE_URL está configurado
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json(
+        { success: false, error: 'Database not configured' },
+        { status: 500 }
+      );
+    }
+
+    // Dynamic import to avoid webpack issues
+    const { default: postgres } = await import('postgres');
+    sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
 
     // Atualizar último heartbeat e status do dispositivo
     const result = await sql`
@@ -59,6 +70,15 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('❌ Erro ao processar heartbeat:', error);
+    
+    if (sql) {
+      try {
+        await sql.end();
+      } catch (endError) {
+        console.error('Error closing database connection:', endError);
+      }
+    }
+    
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor', details: error.message },
       { status: 500 }
