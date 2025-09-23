@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     // Validar dados obrigatórios
-    const { name, model, android_version, firebase_token } = body;
+    const { name, model, android_version, firebase_token, device_identifier } = body;
     
     if (!name || !model || !android_version) {
       return NextResponse.json({ 
@@ -21,32 +21,58 @@ export async function POST(request: NextRequest) {
     // Gerar código único de 6 dígitos para emparelhamento
     const pairingCode = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // Gerar ID único para o dispositivo
-    const deviceId = `sdb_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Usar organização padrão (primeira organização) para dispositivos não autenticados
+    // Em produção, isso seria determinado pelo domínio ou contexto de autenticação
+    const defaultOrgResult = await sql`
+      SELECT id FROM organizations 
+      ORDER BY created_at ASC 
+      LIMIT 1
+    `;
 
-    // Inserir registro pendente (não aparece na lista até ser aprovado)
+    if (defaultOrgResult.length === 0) {
+      await sql.end();
+      return NextResponse.json({ 
+        success: false,
+        error: 'Nenhuma organização configurada no sistema' 
+      }, { status: 500 });
+    }
+
+    const organizationId = defaultOrgResult[0].id;
+
+    // Inserir dispositivo com status 'inactive' (pendente de aprovação)
     const result = await sql`
-      INSERT INTO device_registrations (
-        device_id,
-        pairing_code,
-        name, 
+      INSERT INTO devices (
+        organization_id,
+        name,
+        device_identifier,
+        manufacturer,
         model,
-        android_version,
-        firebase_token,
+        os_version,
+        fcm_token,
         status,
-        created_at,
-        expires_at
+        owner_name,
+        tags,
+        metadata,
+        created_at
       ) VALUES (
-        ${deviceId},
-        ${pairingCode},
+        ${organizationId},
         ${name},
+        ${device_identifier || `android_${Date.now()}`},
+        'Android',
         ${model},
         ${android_version},
         ${firebase_token || null},
-        'pending',
-        NOW(),
-        NOW() + INTERVAL '1 hour'
-      ) RETURNING *
+        'inactive',
+        'Usuário Android',
+        ${JSON.stringify(['pending_approval', 'android_device'])},
+        ${JSON.stringify({
+          pairing_code: pairingCode,
+          registration_source: 'android_app',
+          requires_approval: true,
+          registration_timestamp: new Date().toISOString()
+        })},
+        NOW()
+      ) RETURNING id, name, status, metadata
     `;
 
     await sql.end();
@@ -58,13 +84,14 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    const registration = result[0];
+    const device = result[0];
+    const deviceMetadata = device.metadata as any;
 
     return NextResponse.json({ 
       success: true,
       data: {
-        device_id: registration.device_id,
-        pairing_code: registration.pairing_code,
+        device_id: device.id,
+        pairing_code: deviceMetadata.pairing_code,
         status: 'pending',
         message: 'Dispositivo registrado. Use o código no sistema web para aprovar.'
       }
@@ -95,11 +122,14 @@ export async function GET(request: NextRequest) {
 
     const sql = postgres(process.env.DATABASE_URL!, { ssl: 'require' });
 
-    // Verificar status do registro
+    // Verificar dispositivo pelo código de emparelhamento no metadata
     const result = await sql`
-      SELECT * FROM device_registrations 
-      WHERE pairing_code = ${code} 
-      AND expires_at > NOW()
+      SELECT id, name, status, metadata, created_at
+      FROM devices 
+      WHERE metadata->>'pairing_code' = ${code}
+      AND created_at > NOW() - INTERVAL '24 hours'
+      ORDER BY created_at DESC
+      LIMIT 1
     `;
 
     await sql.end();
@@ -111,14 +141,16 @@ export async function GET(request: NextRequest) {
       }, { status: 404 });
     }
 
-    const registration = result[0];
+    const device = result[0];
+    const isApproved = device.status === 'online' || device.status === 'offline';
 
     return NextResponse.json({ 
       success: true,
       data: {
-        device_id: registration.device_id,
-        status: registration.status,
-        approved: registration.status === 'approved'
+        device_id: device.id,
+        status: isApproved ? 'approved' : 'pending',
+        approved: isApproved,
+        device_status: device.status
       }
     });
 

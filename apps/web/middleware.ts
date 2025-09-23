@@ -22,7 +22,7 @@ const PROTECTED_ROUTES = [
   '/policies', 
   '/analytics',
   '/settings',
-  '/api/devices',
+  '/api/devices/pair',
   '/api/organizations',
   '/api/policies',
   '/api/analytics',
@@ -37,6 +37,8 @@ const PUBLIC_ROUTES = [
   '/api/auth',
   '/api/health',
   '/api/test-vercel',
+  '/api/devices/register',
+  '/api/debug',
 ];
 
 const ADMIN_ONLY_ROUTES = [
