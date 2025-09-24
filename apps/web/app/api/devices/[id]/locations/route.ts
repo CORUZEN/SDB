@@ -37,7 +37,6 @@ export async function GET(
         accuracy,
         altitude,
         speed,
-        heading,
         location_method,
         address,
         created_at
@@ -62,7 +61,6 @@ export async function GET(
         accuracy: loc.accuracy,
         altitude: loc.altitude,
         speed: loc.speed,
-        heading: loc.heading,
         location_method: loc.location_method,
         address: loc.address,
         created_at: loc.created_at
@@ -110,7 +108,6 @@ export async function POST(
         accuracy,
         altitude,
         speed,
-        heading,
         location_method,
         address,
         created_at
@@ -122,7 +119,6 @@ export async function POST(
         ${body.accuracy || null},
         ${body.altitude || null},
         ${body.speed || null},
-        ${body.heading || null},
         ${body.location_method || 'gps'},
         ${body.address || null},
         NOW()
@@ -157,7 +153,6 @@ export async function POST(
         accuracy: location.accuracy,
         altitude: location.altitude,
         speed: location.speed,
-        heading: location.heading,
         location_method: location.location_method,
         address: location.address,
         created_at: location.created_at
