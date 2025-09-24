@@ -85,7 +85,17 @@ export default function DeviceDetailsPage() {
   const [refreshing, setRefreshing] = useState(false);
 
   const loadDeviceData = useCallback(async () => {
+    console.log('🚀 Starting loadDeviceData for deviceId:', deviceId);
+    
+    if (!deviceId) {
+      console.error('❌ No deviceId provided');
+      setLoading(false);
+      return;
+    }
+    
     try {
+      console.log('📡 Fetching device data...');
+      
       // Load device details
       const deviceResponse = await fetch(`/api/devices/${deviceId}`, {
         headers: {
@@ -94,14 +104,31 @@ export default function DeviceDetailsPage() {
         }
       });
 
+      console.log('📋 Device API response status:', deviceResponse.status);
+
       if (deviceResponse.ok) {
         const deviceData = await deviceResponse.json();
-        setDevice(deviceData.data);
+        console.log('✅ Device data received:', deviceData.success, deviceData.data ? 'with data' : 'no data');
+        
+        if (deviceData.success && deviceData.data) {
+          setDevice(deviceData.data);
+          console.log('✅ Device state updated successfully');
+        } else {
+          console.error('❌ API returned success=false or no data');
+          setDevice(null);
+          // Don't redirect, just show error state
+          setLoading(false);
+          return;
+        }
       } else {
-        console.error('Failed to load device');
-        router.push('/devices');
+        console.error('❌ Device API failed with status:', deviceResponse.status);
+        setDevice(null);
+        // Don't redirect, just show error state  
+        setLoading(false);
         return;
       }
+
+      console.log('📡 Loading additional data (commands & locations)...');
 
       // Load commands (with better error handling)
       try {
@@ -115,10 +142,13 @@ export default function DeviceDetailsPage() {
           const commandsData = await commandsResponse.json();
           if (commandsData.success && commandsData.data) {
             setCommands(commandsData.data);
+            console.log('✅ Commands loaded:', commandsData.data.length);
           }
+        } else {
+          console.log('⚠️ Commands API returned status:', commandsResponse.status);
         }
       } catch (error) {
-        console.warn('Commands API not available:', error);
+        console.warn('⚠️ Commands API not available:', error instanceof Error ? error.message : 'Unknown error');
         setCommands([]); // Set empty array instead of keeping loading state
       }
 
@@ -134,18 +164,27 @@ export default function DeviceDetailsPage() {
           const locationsData = await locationsResponse.json();
           if (locationsData.success && locationsData.data) {
             setLocations(locationsData.data);
+            console.log('✅ Locations loaded:', locationsData.data.length);
           }
+        } else {
+          console.log('⚠️ Locations API returned status:', locationsResponse.status);
         }
       } catch (error) {
-        console.warn('Locations API not available:', error);
+        console.warn('⚠️ Locations API not available:', error instanceof Error ? error.message : 'Unknown error');
         setLocations([]); // Set empty array instead of keeping loading state
       }
 
+      console.log('✅ Data loading completed successfully');
+
     } catch (error) {
-      console.error('Error loading device data:', error);
-      router.push('/devices');
+      console.error('❌ Fatal error loading device data:', error);
+      setDevice(null);
+      // Don't redirect automatically, let user see error and decide
+      setLoading(false);
+      return;
     } finally {
       setLoading(false);
+      console.log('🏁 loadDeviceData finished');
     }
   }, [deviceId, router]);
 
@@ -238,22 +277,40 @@ export default function DeviceDetailsPage() {
     );
   }
 
-  if (!device) {
+  if (!device && !loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
         <div className="text-center bg-white rounded-lg shadow-lg p-8 max-w-md">
           <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-slate-900 mb-2">Dispositivo não encontrado</h2>
-          <p className="text-slate-600 mb-4">O dispositivo solicitado não foi encontrado ou você não tem permissão para visualizá-lo.</p>
-          <button 
-            onClick={() => router.push('/devices')}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Voltar para Dispositivos
-          </button>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">Erro ao carregar dispositivo</h2>
+          <p className="text-slate-600 mb-4">
+            Não foi possível carregar os dados do dispositivo. Verifique se o ID está correto ou se há problemas de conectividade.
+          </p>
+          <div className="space-y-2">
+            <p className="text-sm text-slate-500">Device ID: {deviceId}</p>
+            <div className="flex space-x-2 justify-center">
+              <button 
+                onClick={loadDeviceData}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Tentar Novamente
+              </button>
+              <button 
+                onClick={() => router.push('/devices')}
+                className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-300 transition-colors"
+              >
+                Voltar para Dispositivos
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
+  }
+
+  // This check ensures device is not null for the rest of the component
+  if (!device) {
+    return null; // This shouldn't happen due to loading check above, but satisfies TypeScript
   }
 
   return (
