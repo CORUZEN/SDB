@@ -50,29 +50,61 @@ export default function DevicePage() {
   const [sendingCommand, setSendingCommand] = useState(false);
 
   const loadDeviceData = useCallback(async () => {
+    console.log('🚀 Starting loadDeviceData for deviceId:', deviceId);
+    
+    if (!deviceId) {
+      console.error('❌ No deviceId provided');
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     try {
+      console.log('📡 Fetching device data...');
+      
       // Carregar dados do dispositivo
       const deviceData = await devicesApi.getById(deviceId);
+      console.log('📋 Device data received:', deviceData ? 'with data' : 'no data');
+      
       if (!deviceData) {
-        router.push('/dashboard');
+        console.error('❌ No device data received');
+        setDevice(null);
+        setLoading(false);
         return;
       }
       setDevice(deviceData);
+      console.log('✅ Device state updated successfully');
 
-      // Carregar localizações
-      const locationsData = await locationsApi.getForDevice(deviceId, 20);
-      setLocations(locationsData);
+      // Carregar localizações (com tratamento de erro)
+      try {
+        const locationsData = await locationsApi.getForDevice(deviceId, 20);
+        setLocations(locationsData);
+        console.log('✅ Locations loaded:', locationsData.length);
+      } catch (error) {
+        console.warn('⚠️ Locations API not available:', error instanceof Error ? error.message : 'Unknown error');
+        setLocations([]);
+      }
 
-      // Carregar comandos
-      const commandsData = await commandsApi.getForDevice(deviceId, 20);
-      setCommands(commandsData);
+      // Carregar comandos (com tratamento de erro)
+      try {
+        const commandsData = await commandsApi.getForDevice(deviceId, 20);
+        setCommands(commandsData);
+        console.log('✅ Commands loaded:', commandsData.length);
+      } catch (error) {
+        console.warn('⚠️ Commands API not available:', error instanceof Error ? error.message : 'Unknown error');
+        setCommands([]);
+      }
+
+      console.log('✅ Data loading completed successfully');
 
     } catch (error) {
-      console.error('Erro ao carregar dados do dispositivo:', error);
-      router.push('/dashboard');
+      console.error('❌ Fatal error loading device data:', error);
+      setDevice(null);
+      setLoading(false);
+      return;
     } finally {
       setLoading(false);
+      console.log('🏁 loadDeviceData finished');
     }
   }, [deviceId, router]);
 
