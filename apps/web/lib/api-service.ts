@@ -145,10 +145,9 @@ export const commandsApi = {
     type: Command['type'];
     payload?: Record<string, any>;
   }): Promise<Command> {
-    const result = await apiRequest<Command>('/commands', {
+    const result = await apiRequest<Command>(`/devices/${deviceId}/commands`, {
       method: 'POST',
       body: JSON.stringify({
-        deviceId,
         type: command.type,
         payload: command.payload || {},
       }),
@@ -162,7 +161,7 @@ export const commandsApi = {
 
   // Buscar comandos de um dispositivo
   async getForDevice(deviceId: string, limit = 50): Promise<Command[]> {
-    const result = await apiRequest<Command[]>(`/commands?device_id=${deviceId}&limit=${limit}`);
+    const result = await apiRequest<Command[]>(`/devices/${deviceId}/commands?limit=${limit}`);
     return result.data || [];
   },
 
@@ -198,7 +197,11 @@ export const locationsApi = {
 
   // Buscar localizações de um dispositivo específico
   async getForDevice(deviceId: string, limit = 50): Promise<Location[]> {
-    return this.getAll(deviceId, limit);
+    const result = await apiRequest<Location[]>(`/devices/${deviceId}/locations?limit=${limit}`);
+    if (!result.success) {
+      throw new Error(result.error || 'Erro ao buscar localizações');
+    }
+    return result.data || [];
   },
 
   // Buscar última localização de um dispositivo
