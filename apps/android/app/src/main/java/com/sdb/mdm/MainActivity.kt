@@ -15,6 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import com.sdb.mdm.SDBApplication
 import com.sdb.mdm.ui.pairing.PairingScreen
 import com.sdb.mdm.ui.dashboard.DashboardScreenProfessional
+import com.sdb.mdm.ui.permissions.PermissionRequestScreen
 import com.sdb.mdm.ui.theme.SDBTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -41,9 +42,17 @@ class MainActivity : ComponentActivity() {
 fun SDBApp() {
     val navController = rememberNavController()
     
-    // Verificar se já está emparelhado
-    val deviceId = SDBApplication.instance.getStoredDeviceId()
-    val startDestination = if (deviceId?.isNotEmpty() == true) "dashboard" else "pairing"
+    // Verificar se o device está realmente pareado
+    val isPaired = SDBApplication.instance.isDevicePaired()
+    
+    // Decisão para destino inicial baseado no status de pairing
+    val startDestination = if (isPaired) {
+        android.util.Log.d("MainActivity", "Device está pareado - Starting with DASHBOARD")
+        "dashboard"
+    } else {
+        android.util.Log.d("MainActivity", "Device NÃO está pareado - Starting with PERMISSIONS")
+        "permissions"
+    }
     
     Scaffold(
         modifier = Modifier.fillMaxSize()
@@ -53,9 +62,21 @@ fun SDBApp() {
             startDestination = startDestination,
             modifier = Modifier.padding(innerPadding)
         ) {
+            composable("permissions") {
+                PermissionRequestScreen(
+                    onAllPermissionsGranted = {
+                        android.util.Log.d("MainActivity", "All permissions granted, navigating to pairing")
+                        navController.navigate("pairing") {
+                            popUpTo("permissions") { inclusive = true }
+                        }
+                    }
+                )
+            }
+            
             composable("pairing") {
                 PairingScreen(
                     onPairingSuccess = {
+                        android.util.Log.d("MainActivity", "Pairing successful, navigating to dashboard")
                         navController.navigate("dashboard") {
                             popUpTo("pairing") { inclusive = true }
                         }

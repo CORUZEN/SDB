@@ -62,9 +62,17 @@ class PairingViewModel @Inject constructor(
                 
                 result.fold(
                     onSuccess = { device ->
-                        // Salvar device ID após pareamento bem-sucedido
+                        // Salvar device ID e marcar como configurado após pareamento bem-sucedido
                         SDBApplication.instance.setStoredDeviceId(device.id)
+                        SDBApplication.instance.setDeviceSetup(true)
                         Log.d("PairingViewModel", "Device ID salvo: ${device.id}")
+                        Log.d("PairingViewModel", "Device setup marcado como true")
+                        
+                        // Verificar se foi realmente salvo
+                        val savedId = SDBApplication.instance.getStoredDeviceId()
+                        val setupStatus = SDBApplication.instance.isDeviceSetup()
+                        Log.d("PairingViewModel", "Verificação - Device ID salvo: $savedId")
+                        Log.d("PairingViewModel", "Verificação - Device setup: $setupStatus")
                         
                         // Iniciar HeartbeatService imediatamente
                         HeartbeatService.start(SDBApplication.instance.applicationContext)

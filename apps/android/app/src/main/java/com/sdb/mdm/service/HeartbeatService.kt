@@ -123,8 +123,17 @@ class HeartbeatService : Service() {
             Log.d(TAG, "💓 Enviando heartbeat...")
             
             val deviceId = SDBApplication.instance.getStoredDeviceId()
-            if (deviceId.isNullOrEmpty()) {
-                Log.w(TAG, "Device ID não encontrado")
+            val isDeviceSetup = SDBApplication.instance.isDeviceSetup()
+            
+            Log.d(TAG, "Device ID: $deviceId")
+            Log.d(TAG, "Device Setup: $isDeviceSetup")
+            
+            if (deviceId.isNullOrEmpty() || !isDeviceSetup) {
+                Log.w(TAG, "Device não está pareado corretamente - ID: $deviceId, Setup: $isDeviceSetup")
+                Log.w(TAG, "Parando HeartbeatService - device precisa ser pareado novamente")
+                
+                // Parar o serviço se não estiver pareado
+                stopSelf()
                 return
             }
             
