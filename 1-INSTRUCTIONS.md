@@ -1,8 +1,5 @@
 # INSTRUCTIONS — FRIAXIS (Gestão de Dispositivos) • MDM Android Corporativo
 
-> **📚 ESTRUTURA DE CONHECIMENTO**: Este arquivo faz parte de um sistema hierárquico de documentação.  
-> **📖 Para agentes de IA**: Consulte [0-KNOWLEDGE-INDEX.md](./0-KNOWLEDGE-INDEX.md) para ordem de leitura otimizada.
-
 **Stack:** Next.js (Vercel) + Neon (Postgres) + Firebase (Auth + FCM) + APK (Launcher+Agente)  
 **Regras:** Sem realtime contínuo • Localização sob demanda • Captura de tela assistida (com consentimento) • Multi-tenant (multi-empresa)
 
@@ -725,103 +722,7 @@ Execução: painel cria comando → envia FCM → APK executa → responde → p
 ✅ Defensive programming             # Null safety em todo o código
 ```
 
-### **� Dynamic Import Pattern - Webpack Issue Resolution**
-```typescript
-// ❌ PROBLEMA: Static imports causam erros webpack em Next.js 14
-import postgres from 'postgres';  // Causa: Error: Cannot find module './6933.js'
-
-// ✅ SOLUÇÃO: Dynamic import com destructuring correto
-const { default: postgres } = await import('postgres');
-
-// ✅ TEMPLATE COMPLETO para endpoints API
-export async function POST(request: NextRequest) {
-  try {
-    // Dynamic import to avoid webpack issues
-    const { default: postgres } = await import('postgres');
-    
-    const sql = postgres(process.env.DATABASE_URL!, {
-      ssl: 'require',
-      max: 5,
-      idle_timeout: 30,
-      connect_timeout: 10,
-    });
-
-    // Sua lógica aqui
-    const result = await sql`SELECT NOW()`;
-    
-    // IMPORTANTE: Sempre feche a conexão
-    await sql.end();
-    
-    return NextResponse.json({ success: true, data: result });
-  } catch (error) {
-    console.error('Endpoint error:', error);
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
-  }
-}
-
-// ✅ PADRÃO CERTIFICADO - Aplicado em todos os endpoints
-```
-
-### **🧪 Certified API Testing Templates**
-```powershell
-# ✅ TEMPLATE BASE - Testar endpoint com validação visual
-$uri = "http://localhost:3001/api/health"
-try {
-    $response = Invoke-RestMethod -Uri $uri -Method GET -UseBasicParsing
-    Write-Host "✅ $uri" -ForegroundColor Green
-    Write-Host "Response: $($response | ConvertTo-Json -Depth 2)" -ForegroundColor Cyan
-} catch {
-    Write-Host "❌ $uri - Error: $($_.Exception.Message)" -ForegroundColor Red
-}
-
-# ✅ TEMPLATE POST com payload
-$uri = "http://localhost:3001/api/devices/heartbeat"
-$headers = @{ 'Content-Type' = 'application/json' }
-$body = @{
-    device_id = "test-device-123"
-    battery_level = 95
-    location = @{ lat = -23.5505; lon = -46.6333 }
-} | ConvertTo-Json
-
-try {
-    $response = Invoke-RestMethod -Uri $uri -Method POST -Body $body -Headers $headers -UseBasicParsing
-    Write-Host "✅ $uri (POST)" -ForegroundColor Green
-    Write-Host "Response: $($response | ConvertTo-Json -Depth 2)" -ForegroundColor Cyan
-} catch {
-    Write-Host "❌ $uri (POST) - Error: $($_.Exception.Message)" -ForegroundColor Red
-}
-
-# ✅ SCRIPT COMPLETO - Teste todos os endpoints principais
-$endpoints = @(
-    @{ uri = "http://localhost:3001/api/health"; method = "GET" },
-    @{ uri = "http://localhost:3001/api/debug/database"; method = "GET" },
-    @{ uri = "http://localhost:3001/api/admin/generate-code"; method = "GET" },
-    @{ uri = "http://localhost:3001/api/devices/heartbeat"; method = "POST"; body = '{"device_id":"test-123","battery_level":95}' }
-)
-
-foreach ($endpoint in $endpoints) {
-    Write-Host "`n--- Testing $($endpoint.uri) ---" -ForegroundColor Yellow
-    
-    try {
-        if ($endpoint.method -eq "POST") {
-            $headers = @{ 'Content-Type' = 'application/json' }
-            $response = Invoke-RestMethod -Uri $endpoint.uri -Method $endpoint.method -Body $endpoint.body -Headers $headers -UseBasicParsing
-        } else {
-            $response = Invoke-RestMethod -Uri $endpoint.uri -Method $endpoint.method -UseBasicParsing
-        }
-        
-        Write-Host "✅ SUCCESS" -ForegroundColor Green
-        Write-Host "Response: $($response | ConvertTo-Json -Depth 2)" -ForegroundColor Cyan
-    } catch {
-        Write-Host "❌ FAILED - $($_.Exception.Message)" -ForegroundColor Red
-    }
-}
-```
-
-### **�🛠️ Ferramentas de Desenvolvimento**
+### **🛠️ Ferramentas de Desenvolvimento**
 ```powershell
 # Servidor de desenvolvimento (método recomendado)
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd C:\SDB-clean-clone\apps\web; npm run dev"
@@ -842,9 +743,7 @@ adb install -r "C:\SDB-clean-clone\SDB-Mobile-v4.0.0-debug.apk"
 
 ---
 
-> **Este é o arquivo 1 de 5 na estrutura de conhecimento FRIAXIS.**  
-> **Consulte**: [0-KNOWLEDGE-INDEX.md](./0-KNOWLEDGE-INDEX.md) para navegação completa  
-> **Próximo**: [2-CHANGELOG.md](./2-CHANGELOG.md) para histórico de versões  
+> **Este instructions.MD é o prompt canônico do projeto FRIAXIS.**  
 > **Última atualização**: 23 de Setembro de 2025  
-> **Status**: 100% Production Ready com Dynamic Import Solutions 🎉  
-> **v4.0.3**: Endpoints 100% funcionais com soluções webpack certificadas
+> **Status**: 100% Production Ready com Endpoints Certificados 🎉  
+> **v4.0.2**: Sistema completamente validado e operacional

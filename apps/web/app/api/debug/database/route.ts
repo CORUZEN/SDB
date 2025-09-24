@@ -1,30 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createCorsResponse, handlePreflight } from "@/lib/cors";
-
-export async function OPTIONS() {
-  return handlePreflight();
-}
+import postgres from 'postgres';
 
 export async function GET(request: NextRequest) {
   try {
-    // Verificar variáveis de ambiente
-    const databaseUrl = process.env.DATABASE_URL;
-    const hasFirebaseProjectId = !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-    
-    if (!databaseUrl) {
-      return createCorsResponse({
-        success: false,
-        error: 'DATABASE_URL não configurado',
-        data: {
-          databaseUrl: 'Não configurado',
-          hasFirebaseProjectId
-        }
-      }, 500);
-    }
-
-    // Importar postgres dinamicamente para evitar problemas de webpack
-    const { default: postgres } = await import('postgres');
-    const sql = postgres(databaseUrl, { ssl: 'require' });
+    const sql = postgres(process.env.DATABASE_URL!, { ssl: 'require' });
 
     // Verificar se a tabela device_registrations existe
     const tableExists = await sql`
@@ -39,7 +18,7 @@ export async function GET(request: NextRequest) {
     let tableStructure = null;
     if (tableExists[0].exists) {
       tableStructure = await sql`
-        SELECT column_name, data_type, is_nullable, column_default
+        SELECT column_name, data_type, is_nullable
         FROM information_schema.columns
         WHERE table_name = 'device_registrations'
         ORDER BY ordinal_position;
@@ -55,25 +34,22 @@ export async function GET(request: NextRequest) {
 
     await sql.end();
 
-    return createCorsResponse({
+    return NextResponse.json({
       success: true,
       data: {
         tableExists: tableExists[0].exists,
         tableStructure,
         recordCount,
-        databaseUrl: 'Configurado',
-        hasFirebaseProjectId,
-        timestamp: new Date().toISOString()
+        databaseUrl: process.env.DATABASE_URL ? 'Configurado' : 'Não configurado'
       }
     });
 
   } catch (error: any) {
     console.error('Erro ao verificar banco:', error);
-    return createCorsResponse({
+    return NextResponse.json({
       success: false,
       error: error.message,
-      details: error.name || 'Database connection error',
-      timestamp: new Date().toISOString()
-    }, 500);
+      stack: error.stack
+    }, { status: 500 });
   }
 }

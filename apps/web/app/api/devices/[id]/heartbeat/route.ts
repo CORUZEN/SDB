@@ -5,6 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import postgres from 'postgres';
 
 // ================================
 // POST /api/devices/[id]/heartbeat
@@ -18,36 +19,12 @@ export async function POST(
   
   try {
     const deviceId = params.id;
+    const body = await request.json();
     
-    // Verificar se é um POST válido
-    if (!deviceId) {
-      return NextResponse.json(
-        { error: 'Device ID is required' },
-        { status: 400 }
-      );
-    }
-
     console.log(`💓 Heartbeat received from device: ${deviceId}`);
 
-    // Verificar se DATABASE_URL está configurado
-    if (!process.env.DATABASE_URL) {
-      return NextResponse.json(
-        { error: 'Database not configured' },
-        { status: 500 }
-      );
-    }
-
-    // Parse body safely
-    let body = {};
-    try {
-      body = await request.json();
-    } catch (e) {
-      console.log('No JSON body provided, using empty object');
-    }
-
-    // Create database connection - dynamic import to avoid webpack issues
-    const { default: postgres } = await import('postgres');
-    sql = postgres(process.env.DATABASE_URL, {
+    // Create database connection
+    sql = postgres(process.env.DATABASE_URL!, {
       ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     });
 
@@ -61,34 +38,26 @@ export async function POST(
       network_info,
       app_version,
       os_version,
-    } = body as any;
+    } = body;
 
-    // Update device with heartbeat and current status (using correct columns)
+    // Update device with heartbeat and current status
     const updateResult = await sql`
       UPDATE devices 
       SET 
         last_heartbeat = NOW(),
         last_seen_at = NOW(),
-        last_checkin_at = NOW(),
-        status = 'online',
         battery_level = ${battery_level || null},
         battery_status = ${battery_status || 'unknown'},
         location_lat = ${location_lat || null},
         location_lng = ${location_lng || null},
         location_accuracy = ${location_accuracy || null},
-        location_timestamp = ${location_lat && location_lng ? sql`NOW()` : sql`location_timestamp`},
-        network_info = ${network_info ? JSON.stringify(network_info) : sql`network_info`},
-        app_version = ${app_version || null},
-        os_version = ${os_version || null},
+        location_timestamp = NOW(),
         updated_at = NOW()
-      WHERE device_identifier = ${deviceId} OR id = ${deviceId}
+      WHERE id = ${deviceId}
       RETURNING 
         id, 
         name, 
-        device_identifier,
         last_heartbeat,
-        last_seen_at,
-        status,
         battery_level,
         location_lat,
         location_lng
@@ -107,18 +76,17 @@ export async function POST(
     console.log(`✅ Heartbeat updated for ${device.name}:`);
     console.log(`   Battery: ${device.battery_level}%`);
     console.log(`   Location: ${device.location_lat}, ${device.location_lng}`);
-    console.log(`   Status: ${device.status}`);
 
     await sql.end();
 
     return NextResponse.json({
       success: true,
-      message: 'Heartbeat processed successfully',
+      message: 'Heartbeat recorded',
       device: {
-        id: device.device_identifier || device.id,
+        id: device.id,
         name: device.name,
-        last_heartbeat: device.last_heartbeat?.toISOString(),
-        status: device.status
+        last_heartbeat: device.last_heartbeat,
+        status: 'online', // Will be online since heartbeat is recent
       },
       timestamp: new Date().toISOString(),
     });

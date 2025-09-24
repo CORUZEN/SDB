@@ -16,6 +16,8 @@ async function checkRecentDevices() {
         model,
         os_version,
         status,
+        battery_level,
+        location,
         metadata,
         created_at,
         updated_at
@@ -39,6 +41,8 @@ async function checkRecentDevices() {
       console.log(`Modelo: ${device.model || 'N/A'}`);
       console.log(`OS Version: ${device.os_version || 'N/A'}`);
       console.log(`Status: ${device.status}`);
+      console.log(`Bateria: ${device.battery_level || 'N/A'}%`);
+      console.log(`Location: ${device.location || 'N/A'}`);
       console.log(`Device Identifier: ${device.device_identifier}`);
       console.log(`Pairing Code: ${device.metadata?.pairing_code || 'N/A'}`);
       console.log(`Criado em: ${device.created_at}`);

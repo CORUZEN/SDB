@@ -39,7 +39,7 @@ class SDBApplication : Application(), Configuration.Provider {
         const val CHANNEL_SYNC = "friaxis_sync"
         
         // App Constants
-        const val APP_VERSION = "4.0.7"
+        const val APP_VERSION = "4.0.0"
         const val APP_NAME = "FRIAXIS MDM"
         
         lateinit var instance: SDBApplication
@@ -75,19 +75,6 @@ class SDBApplication : Application(), Configuration.Provider {
     
     fun isEmergencyMode(): Boolean = preferencesHelper.isEmergencyMode()
     fun setEmergencyMode(enabled: Boolean) = preferencesHelper.setEmergencyMode(enabled)
-    
-    fun isDevicePaired(): Boolean {
-        val deviceId = getStoredDeviceId()
-        val isSetup = isDeviceSetup()
-        val isPaired = !deviceId.isNullOrEmpty() && isSetup
-        
-        android.util.Log.d("SDBApplication", "=== DEVICE PAIRING STATUS ===")
-        android.util.Log.d("SDBApplication", "Device ID: $deviceId")
-        android.util.Log.d("SDBApplication", "Device Setup: $isSetup")
-        android.util.Log.d("SDBApplication", "Is Paired: $isPaired")
-        
-        return isPaired
-    }
     
     fun resetApp() = preferencesHelper.resetApp()
     

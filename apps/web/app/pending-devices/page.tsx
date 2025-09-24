@@ -192,7 +192,7 @@ export default function PendingDevicesPage() {
   const [loadingActions, setLoadingActions] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'urgent' | 'fresh'>('all');
-  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [stats, setStats] = useState<DeviceStats>({

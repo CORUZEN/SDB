@@ -15,8 +15,8 @@ import androidx.core.app.NotificationCompat
 import com.sdb.mdm.MainActivity
 import com.sdb.mdm.R
 import com.sdb.mdm.SDBApplication
-import com.sdb.mdm.model.HeartbeatRequest
-import com.sdb.mdm.model.NetworkInfo
+import com.sdb.mdm.api.ApiService
+import com.sdb.mdm.model.*
 import com.sdb.mdm.utils.LocationHelper
 import kotlinx.coroutines.*
 import java.text.SimpleDateFormat
@@ -155,6 +155,9 @@ class HeartbeatService : Service() {
                     // Atualizar notificação com sucesso
                     val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
                     updateNotification("Online - Última sync: $currentTime | Bateria: ${heartbeatData.batteryLevel}%")
+                    
+                    // Processar comandos pendentes após heartbeat bem-sucedido
+                    processPendingCommands(deviceId, apiService)
                 } else {
                     Log.w(TAG, "⚠️ Heartbeat falhou: ${body?.error}")
                     updateNotification("Erro de sincronização - ${body?.error}")
@@ -335,5 +338,114 @@ class HeartbeatService : Service() {
         val notification = createNotification(status)
         val notificationManager = getSystemService(NotificationManager::class.java)
         notificationManager?.notify(NOTIFICATION_ID, notification)
+    }
+    
+    private suspend fun processPendingCommands(deviceId: String, apiService: ApiService) {
+        try {
+            Log.d(TAG, "🔄 PROCESSANDO COMANDOS PENDENTES - Device: $deviceId")
+            
+            // Buscar todos os comandos da API
+            val commandsResponse = apiService.getAllCommands()
+            
+            if (commandsResponse.isSuccessful) {
+                val commandsBody = commandsResponse.body()
+                if (commandsBody?.success == true) {
+                    val allCommands = commandsBody.data ?: emptyList()
+                    
+                    // Filtrar comandos pendentes para este device
+                    val pendingCommands = allCommands.filter { command ->
+                        command.deviceId == deviceId && 
+                        command.status.equals("pendente", ignoreCase = true)
+                    }
+                    
+                    Log.d(TAG, "📋 Encontrados ${pendingCommands.size} comandos pendentes")
+                    
+                    // Processar cada comando
+                    for (command in pendingCommands) {
+                        executeCommand(command, apiService)
+                    }
+                } else {
+                    Log.w(TAG, "⚠️ Falha ao buscar comandos: ${commandsBody?.error}")
+                }
+            } else {
+                Log.w(TAG, "❌ Erro HTTP ao buscar comandos: ${commandsResponse.code()}")
+            }
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Erro ao processar comandos pendentes", e)
+        }
+    }
+    
+    private suspend fun executeCommand(command: Command, apiService: ApiService) {
+        try {
+            Log.d(TAG, "⚡ Executando comando: ${command.commandType} (ID: ${command.id})")
+            
+            when (command.commandType.uppercase()) {
+                "PING" -> {
+                    Log.d(TAG, "🏓 Processando comando PING")
+                    sendCommandResponse(command.id, apiService, "success", "Pong! Device está online")
+                }
+                
+                "LOCATE_NOW" -> {
+                    Log.d(TAG, "📍 Processando comando LOCATE_NOW")
+                    val location = locationHelper.getCurrentLocation()
+                    if (location != null) {
+                        val locationData = mapOf(
+                            "latitude" to location.latitude,
+                            "longitude" to location.longitude,
+                            "accuracy" to location.accuracy,
+                            "timestamp" to System.currentTimeMillis()
+                        )
+                        sendCommandResponse(command.id, apiService, "success", "Localização obtida", locationData)
+                    } else {
+                        sendCommandResponse(command.id, apiService, "error", "Falha ao obter localização")
+                    }
+                }
+                
+                else -> {
+                    Log.w(TAG, "⚠️ Comando não suportado: ${command.commandType}")
+                    sendCommandResponse(command.id, apiService, "error", "Comando não suportado")
+                }
+            }
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Erro ao executar comando ${command.id}", e)
+            sendCommandResponse(command.id, apiService, "error", "Erro interno: ${e.message}")
+        }
+    }
+    
+    private suspend fun sendCommandResponse(
+        commandId: String, 
+        apiService: ApiService, 
+        status: String, 
+        message: String, 
+        data: Map<String, Any>? = null
+    ) {
+        try {
+            val responseData = mutableMapOf<String, Any>(
+                "status" to status,
+                "message" to message
+            )
+            
+            data?.let { responseData.putAll(it) }
+            
+            val response = CommandResponseRequest(
+                commandId = commandId,
+                status = status,
+                response = responseData,
+                executedAt = System.currentTimeMillis().toString()
+            )
+            
+            val apiResponse = apiService.sendCommandResponse(commandId, response)
+            
+            if (apiResponse.isSuccessful) {
+                Log.d(TAG, "✅ Resposta do comando enviada: $commandId")
+            } else {
+                Log.w(TAG, "⚠️ Falha ao enviar resposta do comando: ${apiResponse.code()}")
+            }
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Erro ao enviar resposta do comando $commandId", e)
+        }
     }
 }

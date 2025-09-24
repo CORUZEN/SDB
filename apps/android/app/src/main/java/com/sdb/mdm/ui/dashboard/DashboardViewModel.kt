@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import com.sdb.mdm.SDBApplication
 import com.sdb.mdm.data.model.*
 import com.sdb.mdm.data.repository.*
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,20 +24,12 @@ class DashboardViewModel @Inject constructor(
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
     
     init {
-        // Obter deviceId e organizationId reais do storage
-        val deviceId = SDBApplication.instance.getStoredDeviceId() ?: ""
-        val organizationId = "1" // Default organization ID
+        // TODO: Get actual device ID from preferences/storage
+        val deviceId = "current_device_id"
+        val organizationId = "current_organization_id"
         
-        if (deviceId.isNotEmpty()) {
-            observeData(deviceId, organizationId)
-            refreshData()
-        } else {
-            // Se não há deviceId, mostrar erro
-            _uiState.value = _uiState.value.copy(
-                isLoading = false,
-                error = "Dispositivo não encontrado. Faça o emparelhamento novamente."
-            )
-        }
+        observeData(deviceId, organizationId)
+        refreshData()
     }
     
     private fun observeData(deviceId: String, organizationId: String) {
@@ -66,28 +57,22 @@ class DashboardViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true)
             
             try {
-                // Usar deviceId real do storage
-                val deviceId = SDBApplication.instance.getStoredDeviceId() ?: ""
-                val organizationId = "1" // Default organization
+                // TODO: Get actual IDs from preferences/storage
+                val deviceId = "current_device_id"
+                val organizationId = "current_organization_id"
                 
-                if (deviceId.isNotEmpty()) {
-                    // Refresh data from server
-                    deviceRepository.refreshDevices(organizationId)
-                    commandRepository.syncCommands(deviceId)
-                    policyRepository.syncPolicies(organizationId)
-                    
-                    // Update last seen
-                    deviceRepository.updateLastSeen(deviceId)
-                    
-                    _uiState.value = _uiState.value.copy(
-                        isOnline = true,
-                        lastRefresh = System.currentTimeMillis()
-                    )
-                } else {
-                    _uiState.value = _uiState.value.copy(
-                        error = "Dispositivo não encontrado. Faça o emparelhamento."
-                    )
-                }
+                // Refresh data from server
+                deviceRepository.refreshDevices(organizationId)
+                commandRepository.syncCommands(deviceId)
+                policyRepository.syncPolicies(organizationId)
+                
+                // Update last seen
+                deviceRepository.updateLastSeen(deviceId)
+                
+                _uiState.value = _uiState.value.copy(
+                    isOnline = true,
+                    lastRefresh = System.currentTimeMillis()
+                )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isOnline = false,

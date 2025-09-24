@@ -71,66 +71,37 @@ class DeviceRegistrationRepository @Inject constructor(
     
     suspend fun registerDeviceWithCode(pairingCode: String, deviceInfo: DeviceSpec): Result<com.sdb.mdm.data.model.Device> {
         return try {
-            Log.d("DeviceRegistration", "Iniciando registro com código: $pairingCode")
+            // Log device info for debugging
             Log.d("DeviceRegistration", "Device specs: ${deviceInfo.manufacturer} ${deviceInfo.model}")
             
-            // Primeiro, validar o código de pareamento
-            try {
-                val validationRequest = mapOf("pairing_code" to pairingCode)
-                apiService.validatePairingCode(validationRequest)
-                Log.d("DeviceRegistration", "Código validado com sucesso")
-            } catch (e: Exception) {
-                Log.e("DeviceRegistration", "Erro na validação do código: ${e.message}")
-                return Result.failure(Exception("Código de pareamento inválido ou expirado"))
-            }
-            
-            // Gerar ID único para o dispositivo
-            val deviceId = generateId()
-            
-            // Registrar no backend via API
-            val registrationRequest = mapOf(
-                "name" to "${deviceInfo.manufacturer} ${deviceInfo.model}",
-                "model" to android.os.Build.MODEL,
-                "android_version" to android.os.Build.VERSION.RELEASE,
-                "firebase_token" to "", // TODO: Get from FirebaseMessaging
-                "pairing_code" to pairingCode,
-                "device_identifier" to deviceId
-            )
-            
-            val registeredDevice = apiService.registerDevice(registrationRequest)
-            Log.d("DeviceRegistration", "Dispositivo registrado no backend: ${registeredDevice.id}")
-            
-            // Criar device registration para salvar localmente
+            // Create device registration  
             val deviceRegistration = DeviceRegistration(
                 id = generateId(),
-                deviceId = registeredDevice.id,
+                deviceId = generateId(),
                 pairingCode = pairingCode,
-                name = registeredDevice.name,
-                model = registeredDevice.model ?: android.os.Build.MODEL,
-                androidVersion = registeredDevice.osVersion ?: android.os.Build.VERSION.RELEASE,
+                name = "Android Device",
+                model = android.os.Build.MODEL,
+                androidVersion = android.os.Build.VERSION.RELEASE,
                 status = RegistrationStatus.PENDING,
                 createdAt = Date(),
-                expiresAt = Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000)
+                expiresAt = Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000) // 24 hours
             )
             
-            // Salvar localmente
             registrationDao.insertRegistration(deviceRegistration)
             
-            // Criar device model
+            // Create a simple device for local storage
             val device = com.sdb.mdm.data.model.Device(
-                id = registeredDevice.id,
-                organizationId = registeredDevice.organizationId ?: "1",
-                name = registeredDevice.name,
-                deviceIdentifier = registeredDevice.deviceIdentifier ?: deviceId,
-                model = registeredDevice.model ?: android.os.Build.MODEL,
-                osVersion = registeredDevice.osVersion ?: android.os.Build.VERSION.RELEASE,
+                id = deviceRegistration.deviceId,
+                organizationId = "default_org",
+                name = deviceRegistration.name,
+                deviceIdentifier = deviceRegistration.deviceId,
+                model = deviceRegistration.model,
+                osVersion = deviceRegistration.androidVersion,
                 status = com.sdb.mdm.data.model.DeviceStatus.PENDING
             )
             
             Result.success(device)
-            
         } catch (e: Exception) {
-            Log.e("DeviceRegistration", "Erro no registro: ${e.message}", e)
             Result.failure(e)
         }
     }

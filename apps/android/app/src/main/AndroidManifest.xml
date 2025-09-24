@@ -2,82 +2,45 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- ===== PERMISSÕES BÁSICAS ===== -->
+    <!-- Permissões básicas -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     
-    <!-- ===== PERMISSÕES DE LOCALIZAÇÃO ===== -->
+    <!-- Permissões de bateria -->
+    <uses-permission android:name="android.permission.BATTERY_STATS" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    
+    <!-- Permissões de localização -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     
-    <!-- ===== PERMISSÕES DE BATERIA E SISTEMA ===== -->
-    <uses-permission android:name="android.permission.BATTERY_STATS" />
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
-    
-    <!-- ===== PERMISSÕES DE DEVICE ADMIN E CONTROLE TOTAL ===== -->
+    <!-- Permissões de device admin -->
     <uses-permission android:name="android.permission.BIND_DEVICE_ADMIN" />
-    <uses-permission android:name="android.permission.DEVICE_POWER" 
-        tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.REBOOT" 
-        tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" 
-        tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
-    <uses-permission android:name="android.permission.CHANGE_CONFIGURATION" />
-    
-    <!-- ===== PERMISSÕES DE ARMAZENAMENTO ===== -->
+    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
     
-    <!-- ===== PERMISSÕES DE CÂMERA E HARDWARE ===== -->
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-    
-    <!-- ===== PERMISSÕES DE APLICATIVOS E TAREFAS ===== -->
+    <!-- Permissões de launcher -->
     <uses-permission android:name="android.permission.GET_TASKS" />
     <uses-permission android:name="android.permission.REORDER_TASKS" />
     <uses-permission android:name="android.permission.REAL_GET_TASKS" />
+    
+    <!-- Permissões do sistema -->
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" 
         tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
-    <uses-permission android:name="android.permission.FORCE_STOP_PACKAGES" 
-        tools:ignore="ProtectedPermissions" />
-    
-    <!-- ===== PERMISSÕES DE OVERLAY E SISTEMA ===== -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    
+    <!-- Debug overlay permission -->
     <uses-permission android:name="android.permission.SYSTEM_OVERLAY_WINDOW" />
-    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-    <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
     
-    <!-- ===== PERMISSÕES DE TELEFONE E SIM ===== -->
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.READ_PRIVILEGED_PHONE_STATE" 
-        tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    
-    <!-- ===== FIREBASE CLOUD MESSAGING ===== -->
+    <!-- Firebase Cloud Messaging -->
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
     
-    <!-- ===== PERMISSÕES DE BACKUP E RESTORE ===== -->
-    <uses-permission android:name="android.permission.BACKUP" />
-    <uses-permission android:name="android.permission.CONFIRM_FULL_BACKUP" />
-    
-    <!-- ===== PERMISSÕES DE NOTIFICAÇÃO ===== -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" />
+    <!-- Foreground Service permissions -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <application
         android:name=".SDBApplication"
@@ -105,13 +68,13 @@
 
         <!-- Device Admin Receiver -->
         <receiver
-            android:name=".receiver.DeviceAdminReceiver"
+            android:name=".admin.SDBDeviceAdminReceiver"
             android:exported="true"
             android:permission="android.permission.BIND_DEVICE_ADMIN">
             
             <meta-data
                 android:name="android.app.device_admin"
-                android:resource="@xml/device_admin" />
+                android:resource="@xml/device_admin_policies" />
             
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />

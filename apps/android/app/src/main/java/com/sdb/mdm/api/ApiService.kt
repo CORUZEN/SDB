@@ -24,8 +24,11 @@ interface ApiService {
     @POST("api/devices/{id}/location")
     suspend fun updateLocation(@Path("id") deviceId: String, @Body location: LocationUpdateRequest): Response<ApiResponse<Unit>>
     
-    @GET("api/devices/{id}/commands")
+    @GET("api/devices/{id}/commands")  
     suspend fun getPendingCommands(@Path("id") deviceId: String): Response<ApiResponse<List<Command>>>
+    
+    @GET("api/commands")
+    suspend fun getAllCommands(): Response<ApiResponse<List<Command>>>
     
     @POST("api/commands/{id}/response")
     suspend fun sendCommandResponse(@Path("id") commandId: String, @Body response: CommandResponseRequest): Response<ApiResponse<Unit>>
