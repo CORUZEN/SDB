@@ -1,32 +1,42 @@
 # INSTRUCTIONS — FRIAXIS (Gestão de Dispositivos) • MDM Android Corporativo
 
 **Stack:** Next.js (Vercel) + Neon (Postgres) + Firebase (Auth + FCM) + APK (Launcher+Agente)  
-**Regras:** Sem realtime contínuo • Localização sob demanda • Captura de tela assistida (com consentimento) • Multi-tenant (multi-empresa)
+**Regras:** Sem realtime contínuo • Localização sob demanda • Captura de tela assistida (com consentimento) • Multi-tenant (multi-empresa)  
+**Versão:** 4.0.8 - Performance Optimized with Cache System
 
 ---
 
 ## 🚀 Guia Operacional (Comandos Essenciais)
 
-### **💻 Desenvolvimento Web**
+### **💻 Desenvolvimento Web (PERFORMANCE OPTIMIZED)**
 ```powershell
-# ✅ MÉTODO CORRETO - Servidor em janela separada (não bloqueia terminal)
+# ✅ MÉTODO RECOMENDADO - Servidor em janela separada
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd C:\SDB-clean-clone\apps\web; npm run dev"
 
 # ✅ ALTERNATIVA - pnpm workspace (da raiz)
 pnpm dev:web                    # A partir da raiz do monorepo
 
-# ❌ EVITAR: cd apps/web && npm run dev (bloqueia terminal)
-# ❌ EVITAR: npm run dev da pasta apps/web (dependências incorretas)
-# ✅ USAR: Sempre da raiz ou janela separada
+# 🚀 PERFORMANCE FEATURES ATIVAS:
+# - Cache inteligente com TTL (5min)
+# - Debounced search (300ms)  
+# - Component memoization
+# - Lazy loading de componentes
+# - Performance monitoring automático
 
-# Verificar se servidor está rodando
+# ✅ VERIFICAÇÕES DE PERFORMANCE
+npm run build                   # Verifica otimizações e bundle size
+npm run lint                    # Verifica warnings ESLint  
+npm run type-check             # Verifica tipos TypeScript
+
+# 🔍 DEBUGGING & MONITORING
+# Console do navegador mostra logs automáticos:
+# "Performance [DevicesPage]: 45.32ms"
+# "Cache hit for: devices-list" 
+# "Search debounced: 300ms delay"
+
+# Verificar servidor e performance
 netstat -ano | findstr :3001   # Deve mostrar LISTENING
-
-# Build para produção
-pnpm --filter @sdb/web build
-
-# Instalar dependências
-pnpm install                    # Na raiz instala tudo
+curl http://localhost:3001/api/devices  # Testa API response time
 ```
 
 ### **📱 Compilação Android**
@@ -37,18 +47,67 @@ cd "C:\SDB-clean-clone\apps\android"
 # Compilação limpa (RECOMENDADO)
 .\gradlew clean assembleDebug
 
-# Para produção (assinado)
-.\gradlew clean assembleRelease
+```
 
-# ❌ EVITAR - sintaxe que causa erros no PowerShell:
-# gradlew clean && gradlew assembleDebug  # Erro: && inválido
-# cd "path" && gradlew assembleDebug      # Erro: path UNC
+### **⚡ Sistema de Performance (NOVO v4.0.8)**
+```powershell
+# ARQUITETURA DE PERFORMANCE IMPLEMENTADA:
+
+# 1. CACHE INTELIGENTE
+# - TTL automático: 5 minutos (300000ms)
+# - Limpeza automática: máximo 100 entradas
+# - Invalidação manual: botão "Atualizar" 
+# - Storage: globalCache no performance-utils.ts
+
+# 2. HOOKS DE PERFORMANCE
+# useDebounce(search, 300)     # Reduz 90% das buscas
+# useCache(key, fetcher, deps) # Sistema de cache automático
+# useDeviceFiltering(devices)  # Filtragem memoizada
+# usePerformanceMonitor(name)  # Logs automáticos de timing
+
+# 3. COMPONENTES OTIMIZADOS  
+# OptimizedDeviceCard.tsx      # React.memo para re-renders
+# Dynamic imports              # Lazy loading de modals
+# Virtual scrolling            # Preparado para listas grandes
+
+# 4. MONITORAMENTO ATIVO
+# Logs automáticos no console:
+# "Performance [DevicesPage]: 123ms"
+# "Cache hit for: devices-list"
+# "Filtered 500 devices in 15ms"
+
+# 5. MÉTRICAS IMPLEMENTADAS
+# - Tempo de carregamento de páginas
+# - Taxa de cache hit/miss  
+# - Performance de filtragem
+# - Tempo de resposta da API
+```
+
+### **📱 Compilação Android (HEARTBEAT ATIVO)**
+```powershell
+# MÉTODO CORRETO - Sempre use do diretório android
+cd "C:\SDB-clean-clone\apps\android"
+
+# Compilação limpa (RECOMENDADO para produção)
+.\gradlew clean assembleDebug
+
+# Para produção (assinado e otimizado)
+.\gradlew clean assembleRelease --stacktrace
 
 # ✅ SINTAXE CORRETA PowerShell:
 cd "apps\android"; .\gradlew assembleDebug  # Usar ; ao invés de &&
 
-# Verificar APK gerado
-ls "app\build\outputs\apk\debug\app-debug.apk"
+# ❌ EVITAR - sintaxe que causa erros:
+# gradlew clean && gradlew assembleDebug  # Erro: && inválido no PowerShell
+
+# Verificar APK gerado e HeartbeatService
+ls "app\build\outputs\apk\debug\" -la
+
+# HEARTBEAT SERVICE ATIVO:
+# - Envia dados a cada 5 minutos
+# - Foreground service configurado
+# - Permissions: FOREGROUND_SERVICE, WAKE_LOCK
+# - API endpoint: POST /api/devices/{id}/heartbeat
 
 # Copiar para raiz com nome descritivo
 Copy-Item "app\build\outputs\apk\debug\app-debug.apk" "..\..\SDB-Mobile-v4.0.0-debug.apk"

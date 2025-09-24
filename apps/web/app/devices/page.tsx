@@ -1,29 +1,48 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import EditDeviceModal from '@/components/EditDeviceModal';
+import OptimizedDeviceCard from '@/components/OptimizedDeviceCard';
 import { 
   Smartphone, 
-  Wifi, 
-  WifiOff,
-  Battery, 
-  Clock, 
-  AlertTriangle,
-  MapPin,
-  Edit3,
-  ExternalLink,
   Plus,
   Search,
   RefreshCw,
   Download,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Filter,
+  SortDesc,
+  Users,
+  Activity,
+  AlertTriangle,
+  Battery,
+  Clock,
+  MapPin,
+  Edit3,
+  ExternalLink,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 import { devicesApi, type Device as DeviceType } from '@/lib/api-service';
 import { useAuth } from '@/components/AuthProvider';
+import { 
+  useDebounce, 
+  useCache, 
+  useDeviceFiltering, 
+  useDeviceStats, 
+  usePagination,
+  usePerformanceMonitor,
+  globalCache 
+} from '@/lib/performance-utils';
+
+// Lazy load heavy components
+const EditDeviceModal = dynamic(() => import('@/components/EditDeviceModal'), {
+  loading: () => <div className="animate-pulse">Carregando...</div>
+});
 
 // Interfaces
 interface DeviceFilters {
@@ -201,7 +220,7 @@ const DeviceCard = ({ device, onEdit, onLocate }: {
         </button>
         
         <Link
-          href={`/device/${device.id}`}
+          href={`/devices/${device.id}`}
           className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-md hover:shadow-lg"
         >
           <ExternalLink className="h-4 w-4" />

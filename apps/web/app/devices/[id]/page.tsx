@@ -186,7 +186,7 @@ export default function DeviceDetailsPage() {
       setLoading(false);
       console.log('🏁 loadDeviceData finished');
     }
-  }, [deviceId, router]);
+  }, [deviceId]);
 
   useEffect(() => {
     if (deviceId) {
