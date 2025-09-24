@@ -31,15 +31,21 @@ class BootReceiver : BroadcastReceiver() {
     
     private fun startServices(context: Context) {
         try {
-            // Iniciar serviço de políticas
-            val policyIntent = Intent(context, PolicyService::class.java)
-            context.startService(policyIntent)
+            Log.d(TAG, "Dispositivo configurado - iniciando serviços...")
             
-            // Iniciar serviço de heartbeat para manter dispositivo online
-            val heartbeatIntent = Intent(context, HeartbeatService::class.java)
-            context.startService(heartbeatIntent)
+            // Iniciar HeartbeatService como foreground service
+            HeartbeatService.start(context)
             
-            Log.d(TAG, "Serviços iniciados após boot (PolicyService + HeartbeatService)")
+            // Iniciar serviço de políticas se disponível
+            try {
+                val policyIntent = Intent(context, PolicyService::class.java)
+                context.startService(policyIntent)
+                Log.d(TAG, "PolicyService iniciado")
+            } catch (e: Exception) {
+                Log.w(TAG, "PolicyService não disponível", e)
+            }
+            
+            Log.d(TAG, "✅ Serviços iniciados automaticamente após boot")
             
         } catch (e: Exception) {
             Log.e(TAG, "Erro ao iniciar serviços após boot", e)

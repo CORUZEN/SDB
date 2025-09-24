@@ -1,16 +1,19 @@
 package com.sdb.mdm.service
 
-import android.app.Service
-import android.os.BatteryManager
+import android.app.*
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.os.BatteryManager
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.core.app.NotificationCompat
+import com.sdb.mdm.MainActivity
+import com.sdb.mdm.R
 import com.sdb.mdm.SDBApplication
 import com.sdb.mdm.model.HeartbeatRequest
 import com.sdb.mdm.model.NetworkInfo
@@ -28,12 +31,21 @@ class HeartbeatService : Service() {
     
     companion object {
         private const val TAG = "HeartbeatService"
-        private const val HEARTBEAT_INTERVAL = 2 * 60 * 1000L // 2 minutos
-        private const val HEARTBEAT_INITIAL_DELAY = 30 * 1000L // 30 segundos inicial
+        private const val HEARTBEAT_INTERVAL = 60 * 1000L // 1 minuto para melhor monitoramento
+        private const val HEARTBEAT_INITIAL_DELAY = 10 * 1000L // 10 segundos inicial
+        
+        // Notification constants
+        private const val NOTIFICATION_ID = 1001
+        private const val CHANNEL_ID = "heartbeat_service"
+        private const val CHANNEL_NAME = "FRIAXIS Heartbeat Service"
         
         fun start(context: Context) {
             val intent = Intent(context, HeartbeatService::class.java)
-            context.startService(intent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
         }
         
         fun stop(context: Context) {
@@ -50,6 +62,12 @@ class HeartbeatService : Service() {
         super.onCreate()
         Log.d(TAG, "HeartbeatService criado")
         locationHelper = LocationHelper(this)
+        
+        // Criar notification channel
+        createNotificationChannel()
+        
+        // Iniciar como foreground service
+        startForeground(NOTIFICATION_ID, createNotification("Inicializando..."))
     }
     
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -61,6 +79,9 @@ class HeartbeatService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
+        
+        // Atualizar notification
+        updateNotification("Conectado ao sistema FRIAXIS")
         
         startHeartbeatTimer()
         
@@ -121,11 +142,17 @@ class HeartbeatService : Service() {
                     Log.d(TAG, "✅ Heartbeat enviado com sucesso")
                     Log.d(TAG, "   Status: ${heartbeatResponse?.device?.status}")
                     Log.d(TAG, "   Bateria: ${heartbeatData.batteryLevel}%")
+                    
+                    // Atualizar notificação com sucesso
+                    val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+                    updateNotification("Online - Última sync: $currentTime | Bateria: ${heartbeatData.batteryLevel}%")
                 } else {
                     Log.w(TAG, "⚠️ Heartbeat falhou: ${body?.error}")
+                    updateNotification("Erro de sincronização - ${body?.error}")
                 }
             } else {
                 Log.w(TAG, "❌ Erro HTTP ${response.code()}: ${response.message()}")
+                updateNotification("Erro de conexão - HTTP ${response.code()}")
             }
             
         } catch (e: Exception) {
@@ -256,5 +283,48 @@ class HeartbeatService : Service() {
             Log.w(TAG, "Erro ao obter versão do app", e)
             "unknown"
         }
+    }
+    
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Canal para o serviço de heartbeat do FRIAXIS"
+                setShowBadge(false)
+            }
+            
+            val notificationManager = getSystemService(NotificationManager::class.java)
+            notificationManager?.createNotificationChannel(channel)
+        }
+    }
+    
+    private fun createNotification(status: String): Notification {
+        val intent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("FRIAXIS MDM")
+            .setContentText(status)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentIntent(pendingIntent)
+            .setOngoing(true)
+            .setAutoCancel(false)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+            .build()
+    }
+    
+    private fun updateNotification(status: String) {
+        val notification = createNotification(status)
+        val notificationManager = getSystemService(NotificationManager::class.java)
+        notificationManager?.notify(NOTIFICATION_ID, notification)
     }
 }

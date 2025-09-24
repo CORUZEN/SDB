@@ -14,7 +14,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.sdb.mdm.SDBApplication
 import com.sdb.mdm.ui.pairing.PairingScreen
-import com.sdb.mdm.ui.dashboard.DashboardScreen
+import com.sdb.mdm.ui.dashboard.DashboardScreenProfessional
 import com.sdb.mdm.ui.theme.SDBTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -64,7 +64,7 @@ fun SDBApp() {
             }
             
             composable("dashboard") {
-                DashboardScreen()
+                com.sdb.mdm.ui.dashboard.DashboardScreenProfessional()
             }
         }
     }
