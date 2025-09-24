@@ -10,6 +10,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
@@ -30,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.sdb.mdm.receiver.DeviceAdminReceiver
+import com.sdb.mdm.utils.PermissionChecker
 
 /**
  * Permission Request Screen - FRIAXIS v4.0.7
@@ -42,34 +44,61 @@ fun PermissionRequestScreen(
 ) {
     val context = LocalContext.current
     var currentStep by remember { mutableStateOf(0) }
+    var forceRefresh by remember { mutableStateOf(0) } // Para forçar recomposição
     
-    // Permission launchers
+    // Verificação inicial ao carregar a tela
+    LaunchedEffect(Unit) {
+        Log.d("PermissionScreen", "Initial permission check on screen load")
+        if (PermissionChecker.areAllPermissionsGranted(context)) {
+            Log.d("PermissionScreen", "All permissions already granted on initial load")
+            onAllPermissionsGranted()
+            return@LaunchedEffect
+        }
+    }
+    
+    // Permission launchers com logs de debug
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
+        Log.d("PermissionScreen", "Location permissions result: $permissions")
         val allGranted = permissions.values.all { it }
-        if (allGranted) currentStep++
+        if (allGranted) {
+            Log.d("PermissionScreen", "Location permissions granted, advancing step")
+            currentStep++
+        } else {
+            Log.w("PermissionScreen", "Some location permissions denied")
+        }
     }
     
     val deviceAdminLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
+        Log.d("PermissionScreen", "Device admin result: ${result.resultCode}")
         if (isDeviceAdminEnabled(context)) {
+            Log.d("PermissionScreen", "Device admin enabled, advancing step")
             currentStep++
+        } else {
+            Log.w("PermissionScreen", "Device admin not enabled")
         }
     }
     
     val overlayPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
+        Log.d("PermissionScreen", "Overlay permission result: ${result.resultCode}")
         if (Settings.canDrawOverlays(context)) {
+            Log.d("PermissionScreen", "Overlay permission granted, advancing step")
             currentStep++
+        } else {
+            Log.w("PermissionScreen", "Overlay permission not granted")
         }
     }
     
     val batteryOptimizationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
+        Log.d("PermissionScreen", "Battery optimization result: ${result.resultCode}")
+        // Always advance for battery optimization (it's optional)
         currentStep++
     }
     
@@ -81,15 +110,16 @@ fun PermissionRequestScreen(
             icon = Icons.Default.LocationOn,
             isGranted = { isLocationPermissionGranted(context) },
             requestAction = {
-                locationPermissionLauncher.launch(
-                    arrayOf(
+                Log.d("PermissionScreen", "Requesting location permissions")
+                try {
+                    val permissions = arrayOf(
                         Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                            Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                        } else null
-                    ).filterNotNull().toTypedArray()
-                )
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    )
+                    locationPermissionLauncher.launch(permissions)
+                } catch (e: Exception) {
+                    Log.e("PermissionScreen", "Error requesting location permissions", e)
+                }
             }
         ),
         PermissionStep(
@@ -98,17 +128,22 @@ fun PermissionRequestScreen(
             icon = Icons.Default.Lock,
             isGranted = { isDeviceAdminEnabled(context) },
             requestAction = {
-                val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
-                    putExtra(
-                        DevicePolicyManager.EXTRA_DEVICE_ADMIN,
-                        ComponentName(context, com.sdb.mdm.receiver.DeviceAdminReceiver::class.java)
-                    )
-                    putExtra(
-                        DevicePolicyManager.EXTRA_ADD_EXPLANATION,
-                        "O FRIAXIS precisa de permissões administrativas para gerenciar este dispositivo"
-                    )
+                Log.d("PermissionScreen", "Requesting device admin permissions")
+                try {
+                    val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
+                        putExtra(
+                            DevicePolicyManager.EXTRA_DEVICE_ADMIN,
+                            ComponentName(context, DeviceAdminReceiver::class.java)
+                        )
+                        putExtra(
+                            DevicePolicyManager.EXTRA_ADD_EXPLANATION,
+                            "O FRIAXIS precisa de permissões administrativas para gerenciar este dispositivo"
+                        )
+                    }
+                    deviceAdminLauncher.launch(intent)
+                } catch (e: Exception) {
+                    Log.e("PermissionScreen", "Error requesting device admin", e)
                 }
-                deviceAdminLauncher.launch(intent)
             }
         ),
         PermissionStep(
@@ -117,11 +152,16 @@ fun PermissionRequestScreen(
             icon = Icons.Default.Phone,
             isGranted = { Settings.canDrawOverlays(context) },
             requestAction = {
-                val intent = Intent(
-                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:${context.packageName}")
-                )
-                overlayPermissionLauncher.launch(intent)
+                Log.d("PermissionScreen", "Requesting overlay permission")
+                try {
+                    val intent = Intent(
+                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:${context.packageName}")
+                    )
+                    overlayPermissionLauncher.launch(intent)
+                } catch (e: Exception) {
+                    Log.e("PermissionScreen", "Error requesting overlay permission", e)
+                }
             }
         ),
         PermissionStep(
@@ -130,21 +170,33 @@ fun PermissionRequestScreen(
             icon = Icons.Default.Settings,
             isGranted = { isBatteryOptimizationDisabled(context) },
             requestAction = {
-                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                    data = Uri.parse("package:${context.packageName}")
+                Log.d("PermissionScreen", "Requesting battery optimization exemption")
+                try {
+                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                        data = Uri.parse("package:${context.packageName}")
+                    }
+                    batteryOptimizationLauncher.launch(intent)
+                } catch (e: Exception) {
+                    Log.e("PermissionScreen", "Error requesting battery optimization", e)
                 }
-                batteryOptimizationLauncher.launch(intent)
             }
         )
     )
     
     // Check if all permissions are granted
-    LaunchedEffect(currentStep) {
-        if (currentStep >= permissionSteps.size) {
-            val allGranted = permissionSteps.all { it.isGranted() }
-            if (allGranted) {
-                onAllPermissionsGranted()
-            }
+    LaunchedEffect(currentStep, forceRefresh) {
+        Log.d("PermissionScreen", "Checking permissions - currentStep: $currentStep, totalSteps: ${permissionSteps.size}")
+        
+        // Check if all mandatory permissions are granted
+        val allPermissionsGranted = PermissionChecker.areAllPermissionsGranted(context)
+        
+        if (allPermissionsGranted) {
+            Log.d("PermissionScreen", "All permissions granted, calling onAllPermissionsGranted")
+            onAllPermissionsGranted()
+        } else if (currentStep >= permissionSteps.size) {
+            Log.d("PermissionScreen", "Reached end of steps but permissions not granted")
+            // Reset to first step if we somehow got to the end without all permissions
+            currentStep = 0
         }
     }
     
@@ -209,10 +261,12 @@ fun PermissionRequestScreen(
             
             // Permission steps
             permissionSteps.forEachIndexed { index, step ->
+                // Use forceRefresh to trigger recomposition
+                val isCompleted = remember(forceRefresh) { step.isGranted() }
                 PermissionStepCard(
                     step = step,
                     isActive = index == currentStep,
-                    isCompleted = index < currentStep || step.isGranted()
+                    isCompleted = index < currentStep || isCompleted
                 )
             }
             
@@ -223,6 +277,17 @@ fun PermissionRequestScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Pular (Desenvolvimento)")
+                }
+                
+                // Refresh button for debugging
+                OutlinedButton(
+                    onClick = { 
+                        Log.d("PermissionScreen", "Manual refresh triggered")
+                        forceRefresh++ 
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Verificar Permissões Novamente")
                 }
             }
         }
@@ -279,7 +344,14 @@ private fun PermissionStepCard(
             
             if (isActive && !isCompleted) {
                 Button(
-                    onClick = step.requestAction
+                    onClick = {
+                        Log.d("PermissionScreen", "Button clicked for: ${step.title}")
+                        try {
+                            step.requestAction()
+                        } catch (e: Exception) {
+                            Log.e("PermissionScreen", "Error executing permission request", e)
+                        }
+                    }
                 ) {
                     Text("Permitir")
                 }
