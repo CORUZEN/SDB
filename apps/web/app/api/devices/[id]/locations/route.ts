@@ -41,7 +41,7 @@ export async function GET(
         location_method,
         address,
         created_at
-      FROM device_locations 
+      FROM locations 
       WHERE device_id = ${id}
       ORDER BY created_at DESC
       LIMIT ${limit}
@@ -102,7 +102,7 @@ export async function POST(
 
     // Create location record
     const newLocation = await sql`
-      INSERT INTO device_locations (
+      INSERT INTO locations (
         device_id,
         organization_id,
         latitude,

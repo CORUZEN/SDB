@@ -34,7 +34,7 @@ export async function GET(
         organization_id,
         command_type as type,
         status,
-        payload,
+        parameters as payload,
         result,
         created_at,
         executed_at,
@@ -103,7 +103,7 @@ export async function POST(
         organization_id,
         command_type,
         status,
-        payload,
+        parameters,
         created_by_user_id,
         created_at
       ) VALUES (
@@ -142,7 +142,7 @@ export async function POST(
         organization_id: command.organization_id,
         type: command.command_type,
         status: command.status,
-        payload: command.payload,
+        payload: command.parameters,
         result: command.result,
         created_at: command.created_at,
         executed_at: command.executed_at,

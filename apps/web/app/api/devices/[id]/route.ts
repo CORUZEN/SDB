@@ -36,7 +36,7 @@ export async function GET(
         CASE 
           WHEN last_heartbeat > NOW() - INTERVAL '5 minutes' THEN 'online'
           WHEN last_heartbeat > NOW() - INTERVAL '1 hour' THEN 'idle'
-          ELSE 'offline'
+          ELSE COALESCE(status, 'offline')
         END as status,
         device_type,
         manufacturer,
@@ -51,12 +51,12 @@ export async function GET(
         location_lat,
         location_lng,
         last_heartbeat,
-        last_command_check,
+        last_seen_at,
         battery_level,
-        storage_available,
-        network_type,
+        battery_status,
+        network_info,
         tags,
-        notes,
+        metadata,
         created_at,
         updated_at
       FROM devices 
@@ -102,12 +102,12 @@ export async function GET(
         location_lat: foundDevice.location_lat,
         location_lng: foundDevice.location_lng,
         last_heartbeat: foundDevice.last_heartbeat,
-        last_command_check: foundDevice.last_command_check,
+        last_seen_at: foundDevice.last_seen_at,
         battery_level: foundDevice.battery_level,
-        storage_available: foundDevice.storage_available,
-        network_type: foundDevice.network_type,
+        battery_status: foundDevice.battery_status,
+        network_info: foundDevice.network_info,
         tags: foundDevice.tags,
-        notes: foundDevice.notes,
+        metadata: foundDevice.metadata,
         created_at: foundDevice.created_at,
         updated_at: foundDevice.updated_at
       }
