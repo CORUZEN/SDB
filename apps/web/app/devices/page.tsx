@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import OptimizedDeviceCard from '@/components/OptimizedDeviceCard';
+// import OptimizedDeviceCard from '@/components/OptimizedDeviceCard';
 import { 
   Smartphone, 
   Plus,
@@ -29,15 +29,16 @@ import {
 } from 'lucide-react';
 import { devicesApi, type Device as DeviceType } from '@/lib/api-service';
 import { useAuth } from '@/components/AuthProvider';
-import { 
-  useDebounce, 
-  useCache, 
-  useDeviceFiltering, 
-  useDeviceStats, 
-  usePagination,
-  usePerformanceMonitor,
-  globalCache 
-} from '@/lib/performance-utils';
+// Remove problematic imports causing build errors
+// import { 
+//   useDebounce, 
+//   useCache, 
+//   useDeviceFiltering, 
+//   useDeviceStats, 
+//   usePagination,
+//   usePerformanceMonitor,
+//   globalCache 
+// } from '@/lib/performance-utils';
 
 // Lazy load heavy components
 const EditDeviceModal = dynamic(() => import('@/components/EditDeviceModal'), {

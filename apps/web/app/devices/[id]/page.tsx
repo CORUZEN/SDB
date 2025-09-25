@@ -192,7 +192,7 @@ export default function DeviceDetailsPage() {
     if (deviceId) {
       loadDeviceData();
     }
-  }, [deviceId, loadDeviceData]);
+  }, [deviceId]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
