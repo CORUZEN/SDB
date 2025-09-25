@@ -12,9 +12,6 @@
 # ✅ MÉTODO CORRETO - Servidor em janela separada (não bloqueia terminal)
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd C:\SDB-clean-clone\apps\web; npm run dev"
 
-# ✅ ALTERNATIVA - pnpm workspace (da raiz)
-pnpm dev:web                    # A partir da raiz do monorepo
-
 # ❌ EVITAR: cd apps/web && npm run dev (bloqueia terminal)
 # ❌ EVITAR: npm run dev da pasta apps/web (dependências incorretas)
 # ✅ USAR: Sempre da raiz ou janela separada

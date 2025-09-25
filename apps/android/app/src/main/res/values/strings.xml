@@ -5,7 +5,7 @@
     
     <!-- App Information -->
     <string name="app_name">FRIAXIS</string>
-    <string name="app_version">4.0.0</string>
+    <string name="app_version">4.0.8</string>
     <string name="device_admin_description">Permite ao FRIAXIS aplicar políticas de segurança corporativas</string>
     
     <!-- Pairing Screen -->
