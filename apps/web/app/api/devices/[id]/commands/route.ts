@@ -34,11 +34,11 @@ export async function GET(
         organization_id,
         type,
         status,
-        payload_json as payload,
+        payload,
         result,
         created_at,
         executed_at,
-        created_by_user_id
+        created_by
       FROM device_commands 
       WHERE device_id = ${id}
       ORDER BY created_at DESC
@@ -61,7 +61,7 @@ export async function GET(
         result: cmd.result,
         created_at: cmd.created_at,
         executed_at: cmd.executed_at,
-        created_by_user_id: cmd.created_by_user_id
+        created_by_user_id: cmd.created_by
       }))
     });
 
@@ -103,8 +103,8 @@ export async function POST(
         organization_id,
         type,
         status,
-        payload_json,
-        created_by_user_id,
+        payload,
+        created_by,
         created_at
       ) VALUES (
         ${id},
@@ -142,11 +142,11 @@ export async function POST(
         organization_id: command.organization_id,
         type: command.type,
         status: command.status,
-        payload: command.payload_json,
+        payload: command.payload,
         result: command.result,
         created_at: command.created_at,
         executed_at: command.executed_at,
-        created_by_user_id: command.created_by_user_id
+        created_by_user_id: command.created_by
       }
     });
 

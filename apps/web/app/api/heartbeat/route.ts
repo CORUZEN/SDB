@@ -7,9 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import postgres from 'postgres';
 
 // Database connection
-const sql = postgres(process.env.DATABASE_URL!, {
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-});
+const sql = postgres(process.env.DATABASE_URL!, { ssl: 'require' });
 
 export async function GET(request: NextRequest) {
   return NextResponse.json({
@@ -33,6 +31,8 @@ export async function POST(request: NextRequest) {
 
     console.log(`💓 Heartbeat received from device: ${device_id}`);
 
+    const sql = postgres(process.env.DATABASE_URL!, { ssl: 'require' });
+
     // Update device with heartbeat and current status
     const updateResult = await sql`
       UPDATE devices 
@@ -52,8 +52,9 @@ export async function POST(request: NextRequest) {
         battery_level
     `;
 
+    await sql.end();
+
     if (updateResult.length === 0) {
-      await sql.end();
       return NextResponse.json(
         { error: 'Device not found' },
         { status: 404 }
@@ -64,8 +65,6 @@ export async function POST(request: NextRequest) {
     
     console.log(`✅ Heartbeat updated for ${device.name}:`);
     console.log(`   Battery: ${device.battery_level}%`);
-
-    await sql.end();
 
     return NextResponse.json({
       success: true,
@@ -81,8 +80,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error: unknown) {
     console.error('❌ Error recording heartbeat:', error);
-    
-    await sql.end();
     
     return NextResponse.json(
       { 

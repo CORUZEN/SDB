@@ -25,27 +25,29 @@ export async function POST(request: NextRequest) {
     const deviceId = `sdb_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Inserir registro pendente (não aparece na lista até ser aprovado)
+    const deviceInfo = {
+      device_id: deviceId,
+      name,
+      model,
+      android_version,
+      firebase_token: firebase_token || null
+    };
+
     const result = await sql`
       INSERT INTO device_registrations (
-        device_id,
         pairing_code,
-        name, 
-        model,
-        android_version,
-        firebase_token,
+        device_info,
         status,
         created_at,
-        expires_at
+        expires_at,
+        organization_id
       ) VALUES (
-        ${deviceId},
         ${pairingCode},
-        ${name},
-        ${model},
-        ${android_version},
-        ${firebase_token || null},
+        ${JSON.stringify(deviceInfo)},
         'pending',
         NOW(),
-        NOW() + INTERVAL '1 hour'
+        NOW() + INTERVAL '1 hour',
+        1
       ) RETURNING *
     `;
 
@@ -63,7 +65,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       success: true,
       data: {
-        device_id: registration.device_id,
+        device_id: deviceId,
         pairing_code: registration.pairing_code,
         status: 'pending',
         message: 'Dispositivo registrado. Use o código no sistema web para aprovar.'
@@ -116,7 +118,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ 
       success: true,
       data: {
-        device_id: registration.device_id,
+        device_id: registration.device_info?.device_id,
         status: registration.status,
         approved: registration.status === 'approved'
       }

@@ -12,7 +12,7 @@
   "dependencies": {
     "@headlessui/react": "^2.2.8",
     "@heroicons/react": "^2.2.0",
-    "@sdb/shared": "workspace:*",
+  "@sdb/shared": "../../packages/shared",
     "@types/pg": "^8.15.5",
     "autoprefixer": "^10.4.21",
     "dotenv": "^17.2.2",
